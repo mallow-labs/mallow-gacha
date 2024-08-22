@@ -63,7 +63,6 @@ The Gumball Guard program contains a set of core access control guards that can 
 - `MintLimit`: specified a limit on the number of mints per wallet
 - `NftBurn`: restricts the mint to holders of a specified collection, requiring a burn of the NFT
 - `NftGate`: restricts the mint to holders of a specified collection
-- `NftPayment`: set the price of the mint as an NFT of a specified collection
 - `ProgramGate`: restricts the programs that can be in a mint transaction
 - `RedeemedAmount`: determines the end of the mint based on a total amount minted
 - `SolPayment`: set the price of the mint in SOL
@@ -781,35 +780,6 @@ The `NftGate` guard restricts the mint to holders of a specified `required_colle
 | -------------- | :------: | :----: | ---------------------------- |
 | `nft_account`  |          |        | Token account of the NFT.    |
 | `nft_metadata` |          |        | Metadata account of the NFT. |
-
-</details>
-
-### `NftPayment`
-
-```rust
-pub struct NftPayment {
-    pub required_collection: Pubkey,
-    pub destination: Pubkey,
-}
-```
-
-The `NftPayment` guard is a payment guard that charges another NFT (token) from a specific collection for the mint. As a requirement of the mint, the specified NFT is transferred to the `destination` address.
-
-<details>
-  <summary>Accounts</summary>
-
-| Name                          | Writable | Signer | Description                                                                            |
-| ----------------------------- | :------: | :----: | -------------------------------------------------------------------------------------- |
-| `nft_account`                 |    ✅    |        | Token account of the NFT.                                                              |
-| `nft_metadata`                |    ✅    |        | Metadata account of the NFT.                                                           |
-| `nft_mint_account`            |          |        | Mint account of the NFT.                                                               |
-| `destination`                 |          |        | Account to receive the NFT.                                                            |
-| `destination_ata`             |    ✅    |        | Destination PDA key (seeds `[destination pubkey, token program id, nft_mint pubkey]`). |
-| `atoken_progam`               |          |        | `spl-associate-token` program.                                                         |
-| `owner_token_record`          |    ✅    |        | (optional) Owner token record account (pNFT).                                          |
-| `destination_token_record`    |    ✅    |        | (optional) Freeze PDA token record account (pNFT).                                     |
-| `authorization_rules_program` |          |        | (optional) Token Authorization Rules program (pNFT).                                   |
-| `authorization_rules`         |          |        | (optional) Token Authorization Rules account (pNFT).                                   |
 
 </details>
 

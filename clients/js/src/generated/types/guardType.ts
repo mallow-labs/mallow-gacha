@@ -20,7 +20,6 @@ export enum GuardType {
   EndDate,
   AllowList,
   MintLimit,
-  NftPayment,
   RedeemedAmount,
   AddressGate,
   NftGate,

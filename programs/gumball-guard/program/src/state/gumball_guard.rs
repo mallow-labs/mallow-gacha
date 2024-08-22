@@ -35,26 +35,25 @@ pub struct GumballGuard {
     //
     // available guards:
     //  1) bot tax
-    //  2) sol payment
-    //  3) token payment
-    //  4) start date
+    //  2) start date
+    //  3) sol payment
+    //  4) token payment
     //  5) third party signer
     //  6) token gate
     //  7) gatekeeper
     //  8) end date
     //  9) allow list
     // 10) mint limit
-    // 11) nft payment
-    // 12) redeemed amount
-    // 13) address gate
-    // 14) nft gate
-    // 15) nft burn
-    // 16) token burn
-    // 17) freeze sol payment
-    // 18) freeze token payment
-    // 19) program gate
-    // 20) allocation
-    // 21) token2022 payment
+    // 11) redeemed amount
+    // 12) address gate
+    // 13) nft gate
+    // 14) nft burn
+    // 15) token burn
+    // 16) freeze sol payment
+    // 17) freeze token payment
+    // 18) program gate
+    // 19) allocation
+    // 20) token2022 payment
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -94,8 +93,6 @@ pub struct GuardSet {
     pub allow_list: Option<AllowList>,
     /// Mint limit guard (add a limit on the number of mints per wallet).
     pub mint_limit: Option<MintLimit>,
-    /// NFT Payment (charge an NFT in order to mint).
-    pub nft_payment: Option<NftPayment>,
     /// Redeemed amount guard (add a limit on the overall number of items minted).
     pub redeemed_amount: Option<RedeemedAmount>,
     /// Address gate (check access against a specified address).
@@ -127,7 +124,6 @@ pub enum GuardType {
     EndDate,
     AllowList,
     MintLimit,
-    NftPayment,
     RedeemedAmount,
     AddressGate,
     NftGate,

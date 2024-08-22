@@ -18,8 +18,6 @@ import {
   NftBurnArgs,
   NftGate,
   NftGateArgs,
-  NftPayment,
-  NftPaymentArgs,
   ProgramGate,
   ProgramGateArgs,
   RedeemedAmount,
@@ -51,7 +49,6 @@ import { GatekeeperMintArgs } from './gatekeeper';
 import { MintLimitMintArgs } from './mintLimit';
 import { NftBurnMintArgs } from './nftBurn';
 import { NftGateMintArgs } from './nftGate';
-import { NftPaymentMintArgs } from './nftPayment';
 import { ThirdPartySignerMintArgs } from './thirdPartySigner';
 import { Token2022PaymentMintArgs } from './token2022Payment';
 import { TokenBurnMintArgs } from './tokenBurn';
@@ -72,7 +69,6 @@ export type DefaultGuardSetArgs = GuardSetArgs & {
   endDate: OptionOrNullable<EndDateArgs>;
   allowList: OptionOrNullable<AllowListArgs>;
   mintLimit: OptionOrNullable<MintLimitArgs>;
-  nftPayment: OptionOrNullable<NftPaymentArgs>;
   redeemedAmount: OptionOrNullable<RedeemedAmountArgs>;
   addressGate: OptionOrNullable<AddressGateArgs>;
   nftGate: OptionOrNullable<NftGateArgs>;
@@ -97,7 +93,6 @@ export type DefaultGuardSet = GuardSet & {
   endDate: Option<EndDate>;
   allowList: Option<AllowList>;
   mintLimit: Option<MintLimit>;
-  nftPayment: Option<NftPayment>;
   redeemedAmount: Option<RedeemedAmount>;
   addressGate: Option<AddressGate>;
   nftGate: Option<NftGate>;
@@ -122,7 +117,6 @@ export type DefaultGuardSetMintArgs = GuardSetMintArgs & {
   // endDate: no mint settings
   allowList: OptionOrNullable<AllowListMintArgs>;
   mintLimit: OptionOrNullable<MintLimitMintArgs>;
-  nftPayment: OptionOrNullable<NftPaymentMintArgs>;
   // redeemedAmount: no mint settings
   // addressGate: no mint settings
   nftGate: OptionOrNullable<NftGateMintArgs>;
@@ -147,7 +141,6 @@ export type DefaultGuardSetRouteArgs = GuardSetRouteArgs & {
   // endDate: no route settings
   allowList: AllowListRouteArgs;
   // mintLimit: no route settings
-  // nftPayment: no route settings
   // redeemedAmount: no route settings
   // addressGate: no route settings
   // nftGate: no route settings
@@ -170,7 +163,6 @@ export const defaultGumballGuardNames: string[] = [
   'endDate',
   'allowList',
   'mintLimit',
-  'nftPayment',
   'redeemedAmount',
   'addressGate',
   'nftGate',

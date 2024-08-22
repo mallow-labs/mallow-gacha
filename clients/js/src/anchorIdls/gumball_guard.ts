@@ -600,40 +600,6 @@ export type GumballGuard = {
       };
     },
     {
-      name: 'NftPayment';
-      docs: [
-        'Guard that charges another NFT (token) from a specific collection as payment',
-        'for the mint.',
-        '',
-        'List of accounts required:',
-        '',
-        '0. `[writeable]` Token account of the NFT.',
-        '1. `[writeable]` Metadata account of the NFT.',
-        '2. `[]` Mint account of the NFT.',
-        '3. `[]` Account to receive the NFT.',
-        '4. `[writeable]` Destination PDA key (seeds [destination pubkey, token program id, nft mint pubkey]).',
-        '5. `[]` spl-associate-token program ID.',
-        '6. `[]` Master edition (pNFT)',
-        '7. `[writable]` Owner token record (pNFT)',
-        '8. `[writable]` Destination token record (pNFT)',
-        '9. `[]` Token Authorization Rules program (pNFT)',
-        '10. `[]` Token Authorization Rules account (pNFT)'
-      ];
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'requiredCollection';
-            type: 'publicKey';
-          },
-          {
-            name: 'destination';
-            type: 'publicKey';
-          }
-        ];
-      };
-    },
-    {
       name: 'ProgramGate';
       docs: [
         'Guard that restricts the programs that can be in a mint transaction. The guard allows the',
@@ -996,15 +962,6 @@ export type GumballGuard = {
             };
           },
           {
-            name: 'nftPayment';
-            docs: ['NFT Payment (charge an NFT in order to mint).'];
-            type: {
-              option: {
-                defined: 'NftPayment';
-              };
-            };
-          },
-          {
             name: 'redeemedAmount';
             docs: [
               'Redeemed amount guard (add a limit on the overall number of items minted).'
@@ -1124,9 +1081,6 @@ export type GumballGuard = {
           },
           {
             name: 'MintLimit';
-          },
-          {
-            name: 'NftPayment';
           },
           {
             name: 'RedeemedAmount';
@@ -2037,40 +1991,6 @@ export const IDL: GumballGuard = {
       },
     },
     {
-      name: 'NftPayment',
-      docs: [
-        'Guard that charges another NFT (token) from a specific collection as payment',
-        'for the mint.',
-        '',
-        'List of accounts required:',
-        '',
-        '0. `[writeable]` Token account of the NFT.',
-        '1. `[writeable]` Metadata account of the NFT.',
-        '2. `[]` Mint account of the NFT.',
-        '3. `[]` Account to receive the NFT.',
-        '4. `[writeable]` Destination PDA key (seeds [destination pubkey, token program id, nft mint pubkey]).',
-        '5. `[]` spl-associate-token program ID.',
-        '6. `[]` Master edition (pNFT)',
-        '7. `[writable]` Owner token record (pNFT)',
-        '8. `[writable]` Destination token record (pNFT)',
-        '9. `[]` Token Authorization Rules program (pNFT)',
-        '10. `[]` Token Authorization Rules account (pNFT)',
-      ],
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'requiredCollection',
-            type: 'publicKey',
-          },
-          {
-            name: 'destination',
-            type: 'publicKey',
-          },
-        ],
-      },
-    },
-    {
       name: 'ProgramGate',
       docs: [
         'Guard that restricts the programs that can be in a mint transaction. The guard allows the',
@@ -2433,15 +2353,6 @@ export const IDL: GumballGuard = {
             },
           },
           {
-            name: 'nftPayment',
-            docs: ['NFT Payment (charge an NFT in order to mint).'],
-            type: {
-              option: {
-                defined: 'NftPayment',
-              },
-            },
-          },
-          {
             name: 'redeemedAmount',
             docs: [
               'Redeemed amount guard (add a limit on the overall number of items minted).',
@@ -2561,9 +2472,6 @@ export const IDL: GumballGuard = {
           },
           {
             name: 'MintLimit',
-          },
-          {
-            name: 'NftPayment',
           },
           {
             name: 'RedeemedAmount',
