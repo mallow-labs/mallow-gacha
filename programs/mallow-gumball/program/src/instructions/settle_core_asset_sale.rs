@@ -187,7 +187,10 @@ pub fn settle_core_asset_sale<'info>(
         &[ctx.bumps.authority_pda],
     ];
 
+    let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
+        amount = 1;
+        
         processors::claim_core_asset(
             gumball_machine,
             index,
@@ -238,7 +241,8 @@ pub fn settle_core_asset_sale<'info>(
         total_proceeds,
         payment_mint: gumball_machine.settings.payment_mint,
         fee_config: gumball_machine.marketplace_fee_config,
-        curator_fee_bps: gumball_machine.settings.curator_fee_bps
+        curator_fee_bps: gumball_machine.settings.curator_fee_bps,
+        amount
     });
 
     Ok(())

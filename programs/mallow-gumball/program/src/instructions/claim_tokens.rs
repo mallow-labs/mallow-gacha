@@ -1,12 +1,15 @@
 use crate::{
     assert_config_line, constants::AUTHORITY_SEED, events::ClaimItemEvent, processors,
-    state::GumballMachine, ConfigLine, GumballError, GumballState, TokenStandard,
+    state::GumballMachine, AssociatedToken, ConfigLine, GumballError, GumballState, Token,
+    TokenStandard,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
 
+/// Settles a legacy NFT sale
 #[event_cpi]
 #[derive(Accounts)]
-pub struct ClaimCoreAsset<'info> {
+pub struct ClaimTokens<'info> {
     /// Anyone can settle the sale
     #[account(mut)]
     payer: Signer<'info>,
@@ -14,6 +17,7 @@ pub struct ClaimCoreAsset<'info> {
     /// Gumball machine account.
     #[account(
         mut,
+        has_one = authority,
         constraint = gumball_machine.state == GumballState::SaleLive || gumball_machine.state == GumballState::SaleEnded @ GumballError::InvalidState
     )]
     gumball_machine: Box<Account<'info, GumballMachine>>,
@@ -29,6 +33,11 @@ pub struct ClaimCoreAsset<'info> {
     )]
     authority_pda: UncheckedAccount<'info>,
 
+    /// Gumball machine authority
+    /// CHECK: Safe due to gumball machine authority check
+    #[account(mut)]
+    authority: UncheckedAccount<'info>,
+
     /// Seller of the nft
     /// CHECK: Safe due to item check
     #[account(mut)]
@@ -38,48 +47,54 @@ pub struct ClaimCoreAsset<'info> {
     /// CHECK: Safe due to item check
     buyer: UncheckedAccount<'info>,
 
+    token_program: Program<'info, Token>,
+    associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>,
+    rent: Sysvar<'info, Rent>,
 
-    /// CHECK: Safe due to item check
-    #[account(mut)]
-    asset: UncheckedAccount<'info>,
+    mint: Box<Account<'info, Mint>>,
 
-    /// CHECK: Safe due to item check
-    #[account(mut)]
-    collection: Option<UncheckedAccount<'info>>,
+    #[account(
+        mut,
+        constraint = buyer_token_account.mint == mint.key(),
+        constraint = buyer_token_account.owner == buyer.key(),
+    )]
+    buyer_token_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: Safe due to constraint
-    #[account(address = mpl_core::ID)]
-    mpl_core_program: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = authority_pda_token_account.mint == mint.key(),
+        constraint = authority_pda_token_account.owner == authority_pda.key(),
+    )]
+    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn claim_core_asset<'info>(
-    ctx: Context<'_, '_, '_, 'info, ClaimCoreAsset<'info>>,
+pub fn claim_tokens<'info>(
+    ctx: Context<'_, '_, '_, 'info, ClaimTokens<'info>>,
     index: u32,
 ) -> Result<()> {
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let payer = &ctx.accounts.payer.to_account_info();
     let buyer = &ctx.accounts.buyer.to_account_info();
+    let buyer_token_account = &ctx.accounts.buyer_token_account.to_account_info();
+    let authority_pda_token_account = &mut ctx.accounts.authority_pda_token_account;
     let authority_pda = &mut ctx.accounts.authority_pda.to_account_info();
     let seller = &mut ctx.accounts.seller.to_account_info();
-    let mpl_core_program = &ctx.accounts.mpl_core_program.to_account_info();
+    let token_program = &ctx.accounts.token_program.to_account_info();
+    let associated_token_program = &ctx.accounts.associated_token_program.to_account_info();
     let system_program = &ctx.accounts.system_program.to_account_info();
-    let asset = &ctx.accounts.asset.to_account_info();
-    let collection_info = ctx
-        .accounts
-        .collection
-        .as_ref()
-        .map(|account| account.to_account_info());
-    let collection = collection_info.as_ref();
+    let rent = &ctx.accounts.rent.to_account_info();
+    let mint = &ctx.accounts.mint.to_account_info();
+    let authority = &ctx.accounts.authority.to_account_info();
 
     assert_config_line(
         gumball_machine,
         index,
         ConfigLine {
-            mint: asset.key(),
+            mint: mint.key(),
             seller: seller.key(),
             buyer: buyer.key(),
-            token_standard: TokenStandard::Core,
+            token_standard: TokenStandard::Fungible,
         },
     )?;
 
@@ -89,26 +104,29 @@ pub fn claim_core_asset<'info>(
         &[ctx.bumps.authority_pda],
     ];
 
-    processors::claim_core_asset(
+    let amount = processors::claim_tokens(
         gumball_machine,
         index,
         authority_pda,
+        authority,
         payer,
         buyer,
-        seller,
-        asset,
-        collection,
-        mpl_core_program,
+        buyer_token_account,
+        authority_pda_token_account,
+        mint,
+        token_program,
+        associated_token_program,
         system_program,
+        rent,
         &auth_seeds,
     )?;
 
     emit_cpi!(ClaimItemEvent {
-        mint: asset.key(),
+        mint: mint.key(),
         authority: gumball_machine.authority.key(),
         seller: seller.key(),
         buyer: buyer.key(),
-        amount: 1,
+        amount,
     });
 
     Ok(())

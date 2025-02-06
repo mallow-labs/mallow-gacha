@@ -1,4 +1,7 @@
-use crate::{constants::GUMBALL_MACHINE_SIZE, get_config_count, GumballError, GumballMachine};
+use crate::{
+    constants::{CONFIG_LINE_SIZE, GUMBALL_MACHINE_SIZE},
+    get_config_count, GumballError, GumballMachine,
+};
 use anchor_lang::prelude::*;
 
 pub fn remove_item(
@@ -7,6 +10,7 @@ pub fn remove_item(
     mint: Pubkey,
     expected_seller: Pubkey,
     index: u32,
+    amount: u64,
 ) -> Result<()> {
     let account_info = gumball_machine.to_account_info();
     // mutable reference to the account data (config lines are written in the
@@ -37,6 +41,17 @@ pub fn remove_item(
     let item_mint =
         Pubkey::try_from(&data[config_line_position..config_line_position + 32]).unwrap();
     require!(mint == item_mint, GumballError::InvalidMint);
+
+    if gumball_machine.version >= 2 {
+        // Make sure the amount is correct
+        let item_amount = u64::from_le_bytes(
+            data[config_line_position + CONFIG_LINE_SIZE
+                ..config_line_position + CONFIG_LINE_SIZE + 8]
+                .try_into()
+                .unwrap(),
+        );
+        require!(item_amount == amount, GumballError::InvalidAmount);
+    }
 
     // if it's the last line we'll just zero out the config slice
     if index == count as u32 - 1 {

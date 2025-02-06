@@ -61,10 +61,10 @@ pub struct AddTokens<'info> {
 
     #[account(
         mut,
-        constraint = gumball_token_account.mint == mint.key(),
-        constraint = gumball_token_account.owner == authority_pda.key(),
+        constraint = authority_pda_token_account.mint == mint.key(),
+        constraint = authority_pda_token_account.owner == authority_pda.key(),
     )]
-    gumball_token_account: Box<Account<'info, TokenAccount>>,
+    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
 
     token_program: Program<'info, Token>,
     associated_token_program: Program<'info, AssociatedToken>,
@@ -84,8 +84,8 @@ pub fn add_tokens(
     let authority_pda = &ctx.accounts.authority_pda.to_account_info();
     let seller = &ctx.accounts.seller.to_account_info();
     let mint = &ctx.accounts.mint.to_account_info();
-    let from_token_account = &ctx.accounts.token_account.to_account_info();
-    let to_token_account = &ctx.accounts.gumball_token_account.to_account_info();
+    let seller_token_account = &ctx.accounts.token_account.to_account_info();
+    let authority_pda_token_account = &ctx.accounts.authority_pda_token_account.to_account_info();
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let seller_history = &mut ctx.accounts.seller_history;
 
@@ -110,8 +110,8 @@ pub fn add_tokens(
     transfer_spl(
         seller,
         authority_pda,
-        from_token_account,
-        to_token_account,
+        seller_token_account,
+        authority_pda_token_account,
         mint,
         seller,
         ata_program,

@@ -792,6 +792,19 @@ export class InvalidAssetPluginError extends ProgramError {
 codeToErrorMap.set(0x17a5, InvalidAssetPluginError);
 nameToErrorMap.set('InvalidAssetPlugin', InvalidAssetPluginError);
 
+/** InvalidAmount: Invalid amount */
+export class InvalidAmountError extends ProgramError {
+  readonly name: string = 'InvalidAmount';
+
+  readonly code: number = 0x17a6; // 6054
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid amount', program, cause);
+  }
+}
+codeToErrorMap.set(0x17a6, InvalidAmountError);
+nameToErrorMap.set('InvalidAmount', InvalidAmountError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

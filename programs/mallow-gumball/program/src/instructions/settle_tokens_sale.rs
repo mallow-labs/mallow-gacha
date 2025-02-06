@@ -7,13 +7,13 @@ use crate::{
     AssociatedToken, ConfigLine, GumballError, GumballState, SellerHistory, Token, TokenStandard,
 };
 use anchor_lang::prelude::*;
-use mpl_token_metadata::{accounts::Metadata, instructions::UpdateMetadataAccountV2CpiBuilder};
-use utils::get_verified_royalty_info;
+use anchor_spl::token::{Mint, TokenAccount};
+use utils::{assert_keys_equal, RoyaltyInfo};
 
 /// Settles a legacy NFT sale
 #[event_cpi]
 #[derive(Accounts)]
-pub struct SettleNftSale<'info> {
+pub struct SettleTokensSale<'info> {
     /// Anyone can settle the sale
     #[account(mut)]
     payer: Signer<'info>,
@@ -50,7 +50,7 @@ pub struct SettleNftSale<'info> {
     #[account(mut)]
     authority_payment_account: Option<UncheckedAccount<'info>>,
 
-    /// Seller of the nft
+    /// Seller of the item
     /// CHECK: Safe due to item check
     #[account(mut)]
     seller: UncheckedAccount<'info>,
@@ -71,7 +71,7 @@ pub struct SettleNftSale<'info> {
     )]
     seller_history: Box<Account<'info, SellerHistory>>,
 
-    /// buyer of the nft
+    /// buyer of the item
     /// CHECK: Safe due to item check
     buyer: UncheckedAccount<'info>,
 
@@ -92,55 +92,39 @@ pub struct SettleNftSale<'info> {
     rent: Sysvar<'info, Rent>,
 
     /// CHECK: Safe due to item check
-    mint: UncheckedAccount<'info>,
+    mint: Box<Account<'info, Mint>>,
 
-    /// CHECK: Safe due to thaw/transfer
-    #[account(mut)]
-    token_account: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = receiver_token_account.mint == mint.key(),
+    )]
+    receiver_token_account: Box<Account<'info, TokenAccount>>,
 
-    /// Nft token account for buyer
-    /// CHECK: Safe due to ata check in transfer
-    #[account(mut)]
-    buyer_token_account: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to transfer
-    #[account(mut)]
-    tmp_token_account: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to processor royalties check
-    #[account(mut)]
-    metadata: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to thaw/send
-    #[account(mut)]
-    edition: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to constraint
-    #[account(address = mpl_token_metadata::ID)]
-    token_metadata_program: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = authority_pda_token_account.mint == mint.key(),
+        constraint = authority_pda_token_account.owner == authority_pda.key(),
+    )]
+    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn settle_nft_sale<'info>(
-    ctx: Context<'_, '_, '_, 'info, SettleNftSale<'info>>,
+pub fn settle_tokens_sale<'info>(
+    ctx: Context<'_, '_, '_, 'info, SettleTokensSale<'info>>,
     index: u32,
 ) -> Result<()> {
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let seller_history = &mut ctx.accounts.seller_history;
     let payer = &ctx.accounts.payer.to_account_info();
     let buyer = &ctx.accounts.buyer.to_account_info();
-    let buyer_token_account = &ctx.accounts.buyer_token_account.to_account_info();
-    let tmp_token_account = &ctx.accounts.tmp_token_account.to_account_info();
+    let receiver_token_account = &ctx.accounts.receiver_token_account.to_account_info();
+    let authority_pda_token_account = &mut ctx.accounts.authority_pda_token_account;
     let authority_pda = &mut ctx.accounts.authority_pda.to_account_info();
     let authority = &mut ctx.accounts.authority.to_account_info();
     let seller = &mut ctx.accounts.seller.to_account_info();
-    let token_metadata_program = &ctx.accounts.token_metadata_program.to_account_info();
-    let token_account = &ctx.accounts.token_account.to_account_info();
     let token_program = &ctx.accounts.token_program.to_account_info();
     let associated_token_program = &ctx.accounts.associated_token_program.to_account_info();
     let system_program = &ctx.accounts.system_program.to_account_info();
     let rent = &ctx.accounts.rent.to_account_info();
-    let metadata = &ctx.accounts.metadata.to_account_info();
-    let edition = &ctx.accounts.edition.to_account_info();
     let mint = &ctx.accounts.mint.to_account_info();
 
     assert_config_line(
@@ -150,11 +134,9 @@ pub fn settle_nft_sale<'info>(
             mint: mint.key(),
             seller: seller.key(),
             buyer: buyer.key(),
-            token_standard: TokenStandard::NonFungible,
+            token_standard: TokenStandard::Fungible,
         },
     )?;
-
-    let royalty_info = get_verified_royalty_info(metadata, mint)?;
 
     let payment_mint_info = ctx
         .accounts
@@ -204,25 +186,20 @@ pub fn settle_nft_sale<'info>(
         &[ctx.bumps.authority_pda],
     ];
 
-    if royalty_info.is_primary_sale {
-        let metadata_account = Metadata::try_from(metadata)?;
-        if metadata_account.update_authority == payer.key() {
-            let mut builder = UpdateMetadataAccountV2CpiBuilder::new(token_metadata_program);
-            builder
-                .metadata(metadata)
-                .update_authority(payer)
-                .primary_sale_happened(true)
-                .invoke()?;
-        }
-    }
 
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
-        amount = 1;
-        
-        processors::claim_nft(
+        // Ensure tokens are going back to the seller when there is no buyer
+        if buyer.key() == Pubkey::default() {
+            assert_keys_equal(ctx.accounts.receiver_token_account.owner, *seller.key, "Invalid receiver_token_account")?;
+        } else {
+            assert_keys_equal(ctx.accounts.receiver_token_account.owner, *buyer.key, "Invalid receiver_token_account")?;
+        }
+
+        amount = processors::claim_tokens(
             gumball_machine,
             index,
+            authority,
             authority_pda,
             payer,
             if buyer.key() == Pubkey::default() {
@@ -230,24 +207,23 @@ pub fn settle_nft_sale<'info>(
             } else {
                 buyer
             },
-            if buyer.key() == Pubkey::default() {
-                token_account
-            } else {
-                buyer_token_account
-            },
-            seller,
-            token_account,
-            tmp_token_account,
+            receiver_token_account,
+            authority_pda_token_account,
             mint,
-            edition,
             token_program,
             associated_token_program,
-            token_metadata_program,
             system_program,
             rent,
             &auth_seeds,
         )?;
     }
+
+    // No royalties for tokens
+    let royalty_info = RoyaltyInfo {
+        is_primary_sale: false,
+        seller_fee_basis_points: 0,
+        creators: None,
+    };
 
     let total_proceeds = claim_proceeds(
         gumball_machine,

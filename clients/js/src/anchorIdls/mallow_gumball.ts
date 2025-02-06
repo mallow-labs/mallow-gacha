@@ -324,7 +324,7 @@ export type MallowGumball = {
           isSigner: false;
         },
         {
-          name: 'gumballTokenAccount';
+          name: 'authorityPdaTokenAccount';
           isMut: true;
           isSigner: false;
         },
@@ -831,6 +831,103 @@ export type MallowGumball = {
       ];
     },
     {
+      name: 'removeTokens';
+      docs: [
+        'Remove fungible tokens from the gumball machine.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[writable]` Gumball Machine account',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        "5. `[writable]` Seller's token account",
+        "6. `[writable]` Gumball machine's token account",
+        '7. `[]` Token program',
+        '8. `[]` Associated Token program',
+        '9. `[]` System program',
+        '10. `[]` Rent sysvar'
+      ];
+      accounts: [
+        {
+          name: 'gumballMachine';
+          isMut: true;
+          isSigner: false;
+          docs: ['Gumball Machine account.'];
+        },
+        {
+          name: 'sellerHistory';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller history account.'];
+        },
+        {
+          name: 'authorityPda';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authority';
+          isMut: false;
+          isSigner: true;
+          docs: [
+            'Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft)'
+          ];
+        },
+        {
+          name: 'seller';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'tokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authorityPdaTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: 'index';
+          type: 'u32';
+        },
+        {
+          name: 'amount';
+          type: 'u64';
+        }
+      ];
+    },
+    {
       name: 'startSale';
       docs: [
         'Allows minting to begin.',
@@ -1186,6 +1283,116 @@ export type MallowGumball = {
       ];
     },
     {
+      name: 'claimTokens';
+      docs: [
+        'Claims fungible tokens from the gumball machine for a specific buyer.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[signer]` Payer (anyone can settle the sale)',
+        '1. `[writable]` Gumball Machine account (must be in SaleLive or SaleEnded state)',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[writable]` Gumball Machine authority',
+        '4. `[writable]` Seller account',
+        '5. `[]` Buyer account',
+        '6. `[]` Token program',
+        '7. `[]` Associated Token program',
+        '8. `[]` System program',
+        '9. `[]` Rent sysvar',
+        '10. `[]` Mint account',
+        "11. `[writable]` Buyer's token account (must match mint and buyer)",
+        "12. `[writable]` Authority PDA's token account (must match mint and authority PDA)"
+      ];
+      accounts: [
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: ['Anyone can settle the sale'];
+        },
+        {
+          name: 'gumballMachine';
+          isMut: true;
+          isSigner: false;
+          docs: ['Gumball machine account.'];
+        },
+        {
+          name: 'authorityPda';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authority';
+          isMut: true;
+          isSigner: false;
+          docs: ['Gumball machine authority'];
+        },
+        {
+          name: 'seller';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller of the nft'];
+        },
+        {
+          name: 'buyer';
+          isMut: false;
+          isSigner: false;
+          docs: ['buyer of the nft'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'buyerTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authorityPdaTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventAuthority';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'program';
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: 'index';
+          type: 'u32';
+        }
+      ];
+    },
+    {
       name: 'settleCoreAssetSale';
       docs: [
         'Settles a Core asset sale',
@@ -1481,6 +1688,171 @@ export type MallowGumball = {
         {
           name: 'tokenMetadataProgram';
           isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'eventAuthority';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'program';
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: 'index';
+          type: 'u32';
+        }
+      ];
+    },
+    {
+      name: 'settleTokensSale';
+      docs: [
+        'Settles a fungible tokens sale',
+        '',
+        '# Accounts',
+        '',
+        '0. `[signer, writable]` Payer (anyone can settle the sale)',
+        '1. `[writable]` Gumball Machine account (must be in SaleEnded state)',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[writable]` Authority PDA payment account (optional)',
+        '4. `[writable]` Authority account',
+        '5. `[writable]` Authority payment account (optional)',
+        '6. `[writable]` Seller account',
+        '7. `[writable]` Seller payment account (optional)',
+        '8. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '9. `[]` Buyer account',
+        '10. `[writable]` Fee account (optional)',
+        '11. `[writable]` Fee payment account (optional)',
+        '12. `[]` Payment mint (optional)',
+        '13. `[]` Token program',
+        '14. `[]` Associated Token program',
+        '15. `[]` System program',
+        '16. `[]` Rent sysvar',
+        '17. `[]` Mint account',
+        '18. `[writable]` Receiver token account (must match mint)',
+        '19. `[writable]` Authority PDA token account (must match mint and authority PDA)'
+      ];
+      accounts: [
+        {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+          docs: ['Anyone can settle the sale'];
+        },
+        {
+          name: 'gumballMachine';
+          isMut: true;
+          isSigner: false;
+          docs: ['Gumball machine account.'];
+        },
+        {
+          name: 'authorityPda';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authorityPdaPaymentAccount';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Payment account for authority pda if using token payment'];
+        },
+        {
+          name: 'authority';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller of the nft'];
+        },
+        {
+          name: 'authorityPaymentAccount';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Payment account for authority if using token payment'];
+        },
+        {
+          name: 'seller';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller of the item'];
+        },
+        {
+          name: 'sellerPaymentAccount';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Payment account for seller if using token payment'];
+        },
+        {
+          name: 'sellerHistory';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller history account.'];
+        },
+        {
+          name: 'buyer';
+          isMut: false;
+          isSigner: false;
+          docs: ['buyer of the item'];
+        },
+        {
+          name: 'feeAccount';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Fee account for marketplace fee if using fee config'];
+        },
+        {
+          name: 'feePaymentAccount';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Payment account for marketplace fee if using token payment'];
+        },
+        {
+          name: 'paymentMint';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+          docs: ['Payment mint if using non-native payment token'];
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'receiverTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'authorityPdaTokenAccount';
+          isMut: true;
           isSigner: false;
         },
         {
@@ -1985,6 +2357,11 @@ export type MallowGumball = {
           name: 'buyer';
           type: 'publicKey';
           index: false;
+        },
+        {
+          name: 'amount';
+          type: 'u64';
+          index: false;
         }
       ];
     },
@@ -2053,6 +2430,11 @@ export type MallowGumball = {
         {
           name: 'curatorFeeBps';
           type: 'u16';
+          index: false;
+        },
+        {
+          name: 'amount';
+          type: 'u64';
           index: false;
         }
       ];
@@ -2328,6 +2710,11 @@ export type MallowGumball = {
       code: 6053;
       name: 'InvalidAssetPlugin';
       msg: 'Asset has an invalid plugin';
+    },
+    {
+      code: 6054;
+      name: 'InvalidAmount';
+      msg: 'Invalid amount';
     }
   ];
 };
@@ -2658,7 +3045,7 @@ export const IDL: MallowGumball = {
           isSigner: false,
         },
         {
-          name: 'gumballTokenAccount',
+          name: 'authorityPdaTokenAccount',
           isMut: true,
           isSigner: false,
         },
@@ -3165,6 +3552,103 @@ export const IDL: MallowGumball = {
       ],
     },
     {
+      name: 'removeTokens',
+      docs: [
+        'Remove fungible tokens from the gumball machine.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[writable]` Gumball Machine account',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        "5. `[writable]` Seller's token account",
+        "6. `[writable]` Gumball machine's token account",
+        '7. `[]` Token program',
+        '8. `[]` Associated Token program',
+        '9. `[]` System program',
+        '10. `[]` Rent sysvar',
+      ],
+      accounts: [
+        {
+          name: 'gumballMachine',
+          isMut: true,
+          isSigner: false,
+          docs: ['Gumball Machine account.'],
+        },
+        {
+          name: 'sellerHistory',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller history account.'],
+        },
+        {
+          name: 'authorityPda',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: false,
+          isSigner: true,
+          docs: [
+            'Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft)',
+          ],
+        },
+        {
+          name: 'seller',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'tokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authorityPdaTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'index',
+          type: 'u32',
+        },
+        {
+          name: 'amount',
+          type: 'u64',
+        },
+      ],
+    },
+    {
       name: 'startSale',
       docs: [
         'Allows minting to begin.',
@@ -3520,6 +4004,116 @@ export const IDL: MallowGumball = {
       ],
     },
     {
+      name: 'claimTokens',
+      docs: [
+        'Claims fungible tokens from the gumball machine for a specific buyer.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[signer]` Payer (anyone can settle the sale)',
+        '1. `[writable]` Gumball Machine account (must be in SaleLive or SaleEnded state)',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[writable]` Gumball Machine authority',
+        '4. `[writable]` Seller account',
+        '5. `[]` Buyer account',
+        '6. `[]` Token program',
+        '7. `[]` Associated Token program',
+        '8. `[]` System program',
+        '9. `[]` Rent sysvar',
+        '10. `[]` Mint account',
+        "11. `[writable]` Buyer's token account (must match mint and buyer)",
+        "12. `[writable]` Authority PDA's token account (must match mint and authority PDA)",
+      ],
+      accounts: [
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: ['Anyone can settle the sale'],
+        },
+        {
+          name: 'gumballMachine',
+          isMut: true,
+          isSigner: false,
+          docs: ['Gumball machine account.'],
+        },
+        {
+          name: 'authorityPda',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: true,
+          isSigner: false,
+          docs: ['Gumball machine authority'],
+        },
+        {
+          name: 'seller',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller of the nft'],
+        },
+        {
+          name: 'buyer',
+          isMut: false,
+          isSigner: false,
+          docs: ['buyer of the nft'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'buyerTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authorityPdaTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'program',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'index',
+          type: 'u32',
+        },
+      ],
+    },
+    {
       name: 'settleCoreAssetSale',
       docs: [
         'Settles a Core asset sale',
@@ -3815,6 +4409,171 @@ export const IDL: MallowGumball = {
         {
           name: 'tokenMetadataProgram',
           isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'eventAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'program',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'index',
+          type: 'u32',
+        },
+      ],
+    },
+    {
+      name: 'settleTokensSale',
+      docs: [
+        'Settles a fungible tokens sale',
+        '',
+        '# Accounts',
+        '',
+        '0. `[signer, writable]` Payer (anyone can settle the sale)',
+        '1. `[writable]` Gumball Machine account (must be in SaleEnded state)',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[writable]` Authority PDA payment account (optional)',
+        '4. `[writable]` Authority account',
+        '5. `[writable]` Authority payment account (optional)',
+        '6. `[writable]` Seller account',
+        '7. `[writable]` Seller payment account (optional)',
+        '8. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '9. `[]` Buyer account',
+        '10. `[writable]` Fee account (optional)',
+        '11. `[writable]` Fee payment account (optional)',
+        '12. `[]` Payment mint (optional)',
+        '13. `[]` Token program',
+        '14. `[]` Associated Token program',
+        '15. `[]` System program',
+        '16. `[]` Rent sysvar',
+        '17. `[]` Mint account',
+        '18. `[writable]` Receiver token account (must match mint)',
+        '19. `[writable]` Authority PDA token account (must match mint and authority PDA)',
+      ],
+      accounts: [
+        {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+          docs: ['Anyone can settle the sale'],
+        },
+        {
+          name: 'gumballMachine',
+          isMut: true,
+          isSigner: false,
+          docs: ['Gumball machine account.'],
+        },
+        {
+          name: 'authorityPda',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authorityPdaPaymentAccount',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Payment account for authority pda if using token payment'],
+        },
+        {
+          name: 'authority',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller of the nft'],
+        },
+        {
+          name: 'authorityPaymentAccount',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Payment account for authority if using token payment'],
+        },
+        {
+          name: 'seller',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller of the item'],
+        },
+        {
+          name: 'sellerPaymentAccount',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Payment account for seller if using token payment'],
+        },
+        {
+          name: 'sellerHistory',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller history account.'],
+        },
+        {
+          name: 'buyer',
+          isMut: false,
+          isSigner: false,
+          docs: ['buyer of the item'],
+        },
+        {
+          name: 'feeAccount',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Fee account for marketplace fee if using fee config'],
+        },
+        {
+          name: 'feePaymentAccount',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Payment account for marketplace fee if using token payment'],
+        },
+        {
+          name: 'paymentMint',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+          docs: ['Payment mint if using non-native payment token'],
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'receiverTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authorityPdaTokenAccount',
+          isMut: true,
           isSigner: false,
         },
         {
@@ -4320,6 +5079,11 @@ export const IDL: MallowGumball = {
           type: 'publicKey',
           index: false,
         },
+        {
+          name: 'amount',
+          type: 'u64',
+          index: false,
+        },
       ],
     },
     {
@@ -4387,6 +5151,11 @@ export const IDL: MallowGumball = {
         {
           name: 'curatorFeeBps',
           type: 'u16',
+          index: false,
+        },
+        {
+          name: 'amount',
+          type: 'u64',
           index: false,
         },
       ],
@@ -4662,6 +5431,11 @@ export const IDL: MallowGumball = {
       code: 6053,
       name: 'InvalidAssetPlugin',
       msg: 'Asset has an invalid plugin',
+    },
+    {
+      code: 6054,
+      name: 'InvalidAmount',
+      msg: 'Invalid amount',
     },
   ],
 };

@@ -6,11 +6,8 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-import { findAssociatedTokenPda } from '@metaplex-foundation/mpl-toolbox';
 import {
   Context,
-  Option,
-  OptionOrNullable,
   Pda,
   PublicKey,
   publicKey,
@@ -20,16 +17,16 @@ import {
 } from '@metaplex-foundation/umi';
 import {
   array,
-  bytes,
   mapSerializer,
-  option,
   Serializer,
   struct,
-  u64,
+  u32,
   u8,
 } from '@metaplex-foundation/umi/serializers';
-import { findGumballMachineAuthorityPda } from '../../hooked';
-import { findSellerHistoryPda } from '../accounts';
+import {
+  findEventAuthorityPda,
+  findGumballMachineAuthorityPda,
+} from '../../hooked';
 import {
   expectPublicKey,
   getAccountMetasAndSigners,
@@ -38,66 +35,67 @@ import {
 } from '../shared';
 
 // Accounts.
-export type AddTokensInstructionAccounts = {
-  /** Gumball Machine account. */
+export type ClaimTokensInstructionAccounts = {
+  /** Anyone can settle the sale */
+  payer?: Signer;
+  /** Gumball machine account. */
   gumballMachine: PublicKey | Pda;
-  /** Seller history account. */
-  sellerHistory?: PublicKey | Pda;
   authorityPda?: PublicKey | Pda;
-  /** Seller of the tokens */
-  seller: Signer;
-  mint: PublicKey | Pda;
-  tokenAccount?: PublicKey | Pda;
-  authorityPdaTokenAccount: PublicKey | Pda;
+  /** Gumball machine authority */
+  authority?: PublicKey | Pda;
+  /** Seller of the nft */
+  seller: PublicKey | Pda;
+  /** buyer of the nft */
+  buyer: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   rent?: PublicKey | Pda;
+  mint: PublicKey | Pda;
+  buyerTokenAccount: PublicKey | Pda;
+  authorityPdaTokenAccount: PublicKey | Pda;
+  eventAuthority?: PublicKey | Pda;
+  program?: PublicKey | Pda;
 };
 
 // Data.
-export type AddTokensInstructionData = {
+export type ClaimTokensInstructionData = {
   discriminator: Array<number>;
-  amount: bigint;
-  sellerProofPath: Option<Array<Uint8Array>>;
+  index: number;
 };
 
-export type AddTokensInstructionDataArgs = {
-  amount: number | bigint;
-  sellerProofPath: OptionOrNullable<Array<Uint8Array>>;
-};
+export type ClaimTokensInstructionDataArgs = { index: number };
 
-export function getAddTokensInstructionDataSerializer(): Serializer<
-  AddTokensInstructionDataArgs,
-  AddTokensInstructionData
+export function getClaimTokensInstructionDataSerializer(): Serializer<
+  ClaimTokensInstructionDataArgs,
+  ClaimTokensInstructionData
 > {
   return mapSerializer<
-    AddTokensInstructionDataArgs,
+    ClaimTokensInstructionDataArgs,
     any,
-    AddTokensInstructionData
+    ClaimTokensInstructionData
   >(
-    struct<AddTokensInstructionData>(
+    struct<ClaimTokensInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['amount', u64()],
-        ['sellerProofPath', option(array(bytes({ size: 32 })))],
+        ['index', u32()],
       ],
-      { description: 'AddTokensInstructionData' }
+      { description: 'ClaimTokensInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [28, 218, 30, 209, 175, 155, 153, 240],
+      discriminator: [108, 216, 210, 231, 0, 212, 42, 64],
     })
-  ) as Serializer<AddTokensInstructionDataArgs, AddTokensInstructionData>;
+  ) as Serializer<ClaimTokensInstructionDataArgs, ClaimTokensInstructionData>;
 }
 
 // Args.
-export type AddTokensInstructionArgs = AddTokensInstructionDataArgs;
+export type ClaimTokensInstructionArgs = ClaimTokensInstructionDataArgs;
 
 // Instruction.
-export function addTokens(
-  context: Pick<Context, 'eddsa' | 'programs'>,
-  input: AddTokensInstructionAccounts & AddTokensInstructionArgs
+export function claimTokens(
+  context: Pick<Context, 'eddsa' | 'identity' | 'payer' | 'programs'>,
+  input: ClaimTokensInstructionAccounts & ClaimTokensInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -107,60 +105,61 @@ export function addTokens(
 
   // Accounts.
   const resolvedAccounts: ResolvedAccountsWithIndices = {
+    payer: { index: 0, isWritable: true, value: input.payer ?? null },
     gumballMachine: {
-      index: 0,
-      isWritable: true,
-      value: input.gumballMachine ?? null,
-    },
-    sellerHistory: {
       index: 1,
       isWritable: true,
-      value: input.sellerHistory ?? null,
+      value: input.gumballMachine ?? null,
     },
     authorityPda: {
       index: 2,
       isWritable: true,
       value: input.authorityPda ?? null,
     },
-    seller: { index: 3, isWritable: true, value: input.seller ?? null },
-    mint: { index: 4, isWritable: false, value: input.mint ?? null },
-    tokenAccount: {
-      index: 5,
-      isWritable: true,
-      value: input.tokenAccount ?? null,
-    },
-    authorityPdaTokenAccount: {
-      index: 6,
-      isWritable: true,
-      value: input.authorityPdaTokenAccount ?? null,
-    },
+    authority: { index: 3, isWritable: true, value: input.authority ?? null },
+    seller: { index: 4, isWritable: true, value: input.seller ?? null },
+    buyer: { index: 5, isWritable: false, value: input.buyer ?? null },
     tokenProgram: {
-      index: 7,
+      index: 6,
       isWritable: false,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 8,
+      index: 7,
       isWritable: false,
       value: input.associatedTokenProgram ?? null,
     },
     systemProgram: {
-      index: 9,
+      index: 8,
       isWritable: false,
       value: input.systemProgram ?? null,
     },
-    rent: { index: 10, isWritable: false, value: input.rent ?? null },
+    rent: { index: 9, isWritable: false, value: input.rent ?? null },
+    mint: { index: 10, isWritable: false, value: input.mint ?? null },
+    buyerTokenAccount: {
+      index: 11,
+      isWritable: true,
+      value: input.buyerTokenAccount ?? null,
+    },
+    authorityPdaTokenAccount: {
+      index: 12,
+      isWritable: true,
+      value: input.authorityPdaTokenAccount ?? null,
+    },
+    eventAuthority: {
+      index: 13,
+      isWritable: false,
+      value: input.eventAuthority ?? null,
+    },
+    program: { index: 14, isWritable: false, value: input.program ?? null },
   };
 
   // Arguments.
-  const resolvedArgs: AddTokensInstructionArgs = { ...input };
+  const resolvedArgs: ClaimTokensInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.sellerHistory.value) {
-    resolvedAccounts.sellerHistory.value = findSellerHistoryPda(context, {
-      gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value),
-      seller: expectPublicKey(resolvedAccounts.seller.value),
-    });
+  if (!resolvedAccounts.payer.value) {
+    resolvedAccounts.payer.value = context.payer;
   }
   if (!resolvedAccounts.authorityPda.value) {
     resolvedAccounts.authorityPda.value = findGumballMachineAuthorityPda(
@@ -168,11 +167,8 @@ export function addTokens(
       { gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value) }
     );
   }
-  if (!resolvedAccounts.tokenAccount.value) {
-    resolvedAccounts.tokenAccount.value = findAssociatedTokenPda(context, {
-      mint: expectPublicKey(resolvedAccounts.mint.value),
-      owner: expectPublicKey(resolvedAccounts.seller.value),
-    });
+  if (!resolvedAccounts.authority.value) {
+    resolvedAccounts.authority.value = context.identity.publicKey;
   }
   if (!resolvedAccounts.tokenProgram.value) {
     resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(
@@ -201,6 +197,16 @@ export function addTokens(
       'SysvarRent111111111111111111111111111111111'
     );
   }
+  if (!resolvedAccounts.eventAuthority.value) {
+    resolvedAccounts.eventAuthority.value = findEventAuthorityPda(context);
+  }
+  if (!resolvedAccounts.program.value) {
+    resolvedAccounts.program.value = context.programs.getPublicKey(
+      'mallowGumball',
+      'MGUMqztv7MHgoHBYWbvMyL3E3NJ4UHfTwgLJUQAbKGa'
+    );
+    resolvedAccounts.program.isWritable = false;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -215,8 +221,8 @@ export function addTokens(
   );
 
   // Data.
-  const data = getAddTokensInstructionDataSerializer().serialize(
-    resolvedArgs as AddTokensInstructionDataArgs
+  const data = getClaimTokensInstructionDataSerializer().serialize(
+    resolvedArgs as ClaimTokensInstructionDataArgs
   );
 
   // Bytes Created On Chain.

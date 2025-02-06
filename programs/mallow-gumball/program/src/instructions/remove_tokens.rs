@@ -2,13 +2,15 @@ use crate::{
     constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
     processors,
     state::GumballMachine,
-    thaw_and_revoke_nft, AssociatedToken, GumballError, SellerHistory, Token,
+    AssociatedToken, GumballError, SellerHistory, Token,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
+use utils::transfer_spl;
 
 /// Add nft to a gumball machine.
 #[derive(Accounts)]
-pub struct RemoveNft<'info> {
+pub struct RemoveTokens<'info> {
     /// Gumball Machine account.
     #[account(
         mut,
@@ -45,43 +47,37 @@ pub struct RemoveNft<'info> {
     #[account(mut)]
     seller: UncheckedAccount<'info>,
 
-    /// CHECK: Safe due to transfer
-    mint: UncheckedAccount<'info>,
+    mint: Box<Account<'info, Mint>>,
 
-    /// CHECK: Safe due to transfer
-    #[account(mut)]
-    token_account: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = token_account.mint == mint.key(),
+        constraint = token_account.owner == seller.key(),
+    )]
+    token_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: Safe due to transfer
-    #[account(mut)]
-    tmp_token_account: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to thaw
-    edition: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = authority_pda_token_account.mint == mint.key(),
+        constraint = authority_pda_token_account.owner == authority_pda.key(),
+    )]
+    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
 
     token_program: Program<'info, Token>,
-
     associated_token_program: Program<'info, AssociatedToken>,
-
-    /// CHECK: Safe due to constraint
-    #[account(address = mpl_token_metadata::ID)]
-    token_metadata_program: UncheckedAccount<'info>,
-
     system_program: Program<'info, System>,
     rent: Sysvar<'info, Rent>,
 }
 
-pub fn remove_nft(ctx: Context<RemoveNft>, index: u32) -> Result<()> {
+pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Result<()> {
     let system_program = &ctx.accounts.system_program.to_account_info();
     let rent = &ctx.accounts.rent.to_account_info();
     let token_program = &ctx.accounts.token_program.to_account_info();
     let associated_token_program = &ctx.accounts.associated_token_program.to_account_info();
-    let token_metadata_program = &ctx.accounts.token_metadata_program.to_account_info();
-    let token_account = &ctx.accounts.token_account.to_account_info();
-    let tmp_token_account = &ctx.accounts.tmp_token_account.to_account_info();
+    let authority_pda_token_account = &ctx.accounts.authority_pda_token_account.to_account_info();
+    let seller_token_account = &ctx.accounts.token_account.to_account_info();
     let authority_pda = &ctx.accounts.authority_pda.to_account_info();
     let authority = &ctx.accounts.authority.to_account_info();
-    let edition = &ctx.accounts.edition.to_account_info();
     let mint = &ctx.accounts.mint.to_account_info();
     let seller = &ctx.accounts.seller.to_account_info();
     let gumball_machine = &mut ctx.accounts.gumball_machine;
@@ -93,7 +89,7 @@ pub fn remove_nft(ctx: Context<RemoveNft>, index: u32) -> Result<()> {
         mint.key(),
         seller.key(),
         index,
-        1,
+        amount,
     )?;
 
     let auth_seeds = [
@@ -102,19 +98,21 @@ pub fn remove_nft(ctx: Context<RemoveNft>, index: u32) -> Result<()> {
         &[ctx.bumps.authority_pda],
     ];
 
-    thaw_and_revoke_nft(
-        authority,
-        mint,
-        token_account,
-        tmp_token_account,
-        edition,
+    transfer_spl(
         authority_pda,
-        &auth_seeds,
-        token_metadata_program,
-        token_program,
+        seller,
+        authority_pda_token_account,
+        seller_token_account,
+        mint,
+        authority,
         associated_token_program,
+        token_program,
         system_program,
         rent,
+        Some(authority_pda),
+        Some(&auth_seeds),
+        None,
+        amount,
     )?;
 
     seller_history.item_count -= 1;

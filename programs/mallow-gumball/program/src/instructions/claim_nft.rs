@@ -135,7 +135,8 @@ pub fn claim_nft<'info>(
         mint: mint.key(),
         authority: gumball_machine.authority.key(),
         seller: seller.key(),
-        buyer: buyer.key()
+        buyer: buyer.key(),
+        amount: 1,
     });
 
     Ok(())

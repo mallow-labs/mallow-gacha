@@ -80,6 +80,7 @@ pub fn remove_core_asset(ctx: Context<RemoveCoreAsset>, index: u32) -> Result<()
         asset_info.key(),
         seller.key(),
         index,
+        1,
     )?;
 
     let collection_info = ctx
