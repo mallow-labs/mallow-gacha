@@ -1,7 +1,4 @@
-use crate::{
-    constants::{CONFIG_LINE_SIZE, GUMBALL_MACHINE_SIZE},
-    get_config_count, GumballError, GumballMachine,
-};
+use crate::{constants::GUMBALL_MACHINE_SIZE, get_config_count, GumballError, GumballMachine};
 use anchor_lang::prelude::*;
 
 pub fn remove_item(
@@ -24,8 +21,9 @@ pub fn remove_item(
     }
 
     let last_index = count - 1;
-    let config_line_position = GUMBALL_MACHINE_SIZE + 4 + (index as usize) * CONFIG_LINE_SIZE;
-    let last_config_line_position = GUMBALL_MACHINE_SIZE + 4 + (last_index) * CONFIG_LINE_SIZE;
+    let config_line_size = gumball_machine.get_config_line_size();
+    let config_line_position = GUMBALL_MACHINE_SIZE + 4 + (index as usize) * config_line_size;
+    let last_config_line_position = GUMBALL_MACHINE_SIZE + 4 + (last_index) * config_line_size;
 
     let seller =
         Pubkey::try_from(&data[config_line_position + 32..config_line_position + 64]).unwrap();
@@ -42,19 +40,17 @@ pub fn remove_item(
 
     // if it's the last line we'll just zero out the config slice
     if index == count as u32 - 1 {
-        data[config_line_position..config_line_position + CONFIG_LINE_SIZE]
+        data[config_line_position..config_line_position + config_line_size]
             .iter_mut()
             .for_each(|x| *x = 0);
     } else {
         // if it's not the last line we'll move the last line to the current position
-        let last_config_slice: [u8; CONFIG_LINE_SIZE] = data
-            [last_config_line_position..last_config_line_position + CONFIG_LINE_SIZE]
-            .try_into()
-            .unwrap();
-        data[config_line_position..config_line_position + CONFIG_LINE_SIZE]
+        let last_config_slice: Vec<u8> =
+            data[last_config_line_position..last_config_line_position + config_line_size].to_vec();
+        data[config_line_position..config_line_position + config_line_size]
             .copy_from_slice(&last_config_slice);
         // zero out the last line
-        data[last_config_line_position..last_config_line_position + CONFIG_LINE_SIZE]
+        data[last_config_line_position..last_config_line_position + config_line_size]
             .iter_mut()
             .for_each(|x| *x = 0);
     }

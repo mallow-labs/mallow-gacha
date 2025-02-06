@@ -2,9 +2,7 @@ use anchor_lang::prelude::*;
 use arrayref::array_ref;
 use solana_program::sysvar;
 use crate::{
-    constants::{
-        GUMBALL_MACHINE_SIZE, CONFIG_LINE_SIZE
-    }, events::DrawItemEvent, utils::*, GumballError, GumballMachine, GumballState
+    constants::GUMBALL_MACHINE_SIZE, events::DrawItemEvent, utils::*, GumballError, GumballMachine, GumballState
 };
 
 /// Draws an item from the gumball machine.
@@ -150,7 +148,7 @@ pub fn set_config_line_buyer(
     account_data[mint_byte_position..mint_byte_position + 4].copy_from_slice(&u32::to_le_bytes(last_value));
 
     // (2) retrieve the config line at the mint_index position
-    let buyer_position = GUMBALL_MACHINE_SIZE + 4 + mint_index * CONFIG_LINE_SIZE 
+    let buyer_position = GUMBALL_MACHINE_SIZE + 4 + mint_index * gumball_machine.get_config_line_size() 
         + 32 // mint
         + 32; // seller
 

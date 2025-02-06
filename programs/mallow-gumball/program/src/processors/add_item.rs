@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{CONFIG_LINE_SIZE, GUMBALL_MACHINE_SIZE},
-    get_config_count, ConfigLineInput, GumballError, GumballMachine, TokenStandard,
+    constants::GUMBALL_MACHINE_SIZE, get_config_count, ConfigLineV2Input, GumballError,
+    GumballMachine, TokenStandard,
 };
 
 pub fn add_item(
     gumball_machine: &mut Account<GumballMachine>,
-    config_line: ConfigLineInput,
+    config_line: ConfigLineV2Input,
     token_standard: TokenStandard,
 ) -> Result<()> {
     let account_info = gumball_machine.to_account_info();
@@ -29,7 +29,8 @@ pub fn add_item(
         return err!(GumballError::IndexGreaterThanLength);
     }
 
-    let mut position = GUMBALL_MACHINE_SIZE + 4 + (index as usize) * CONFIG_LINE_SIZE;
+    let mut position =
+        GUMBALL_MACHINE_SIZE + 4 + (index as usize) * gumball_machine.get_config_line_size();
 
     let mint_slice: &mut [u8] = &mut data[position..position + 32];
     mint_slice.copy_from_slice(&config_line.mint.to_bytes());
@@ -42,6 +43,13 @@ pub fn add_item(
 
     let token_standard_slice: &mut [u8] = &mut data[position..position + 1];
     token_standard_slice.copy_from_slice(&u8::to_be_bytes(token_standard as u8));
+
+    if gumball_machine.version >= 2 {
+        position += 1;
+
+        let amount_slice: &mut [u8] = &mut data[position..position + 64];
+        amount_slice.copy_from_slice(&u64::to_le_bytes(config_line.amount));
+    }
 
     // (unordered) indices for the mint
     let indices_start = gumball_machine.get_mint_indices_position()?;

@@ -1,7 +1,7 @@
 use crate::{
     approve_and_freeze_core_asset, assert_can_add_item, assert_no_permanent_delegates, 
     constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED}, 
-    state::GumballMachine, ConfigLineInput, GumballError, SellerHistory, TokenStandard
+    state::GumballMachine, ConfigLineV2Input, GumballError, SellerHistory, TokenStandard
 };
 use anchor_lang::prelude::*;
 
@@ -90,9 +90,10 @@ pub fn add_core_asset(
 
     crate::processors::add_item(
         gumball_machine,
-        ConfigLineInput {
+        ConfigLineV2Input {
             mint: ctx.accounts.asset.key(),
             seller: ctx.accounts.seller.key(),
+            amount: 1,
         },
         TokenStandard::Core,
     )?;

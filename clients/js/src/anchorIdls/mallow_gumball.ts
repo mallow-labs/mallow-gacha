@@ -1668,8 +1668,32 @@ export type MallowGumball = {
       };
     },
     {
-      name: 'ConfigLine';
+      name: 'ConfigLineV2Input';
       docs: ['Config line struct for storing asset (NFT) data pre-mint.'];
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'mint';
+            docs: ['Mint account of the asset.'];
+            type: 'publicKey';
+          },
+          {
+            name: 'seller';
+            docs: ['Wallet that submitted the asset for sale.'];
+            type: 'publicKey';
+          },
+          {
+            name: 'amount';
+            docs: ['Amount of the asset.'];
+            type: 'u64';
+          }
+        ];
+      };
+    },
+    {
+      name: 'ConfigLine';
+      docs: ['Config line struct for storing asset data.'];
       type: {
         kind: 'struct';
         fields: [
@@ -1696,6 +1720,44 @@ export type MallowGumball = {
             type: {
               defined: 'TokenStandard';
             };
+          }
+        ];
+      };
+    },
+    {
+      name: 'ConfigLineV2';
+      docs: ['Config line struct for storing asset data.'];
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'mint';
+            docs: ['Mint account of the asset.'];
+            type: 'publicKey';
+          },
+          {
+            name: 'seller';
+            docs: ['Wallet that submitted the asset for sale.'];
+            type: 'publicKey';
+          },
+          {
+            name: 'buyer';
+            docs: [
+              'Wallet that will receive the asset upon sale. Empty until drawn.'
+            ];
+            type: 'publicKey';
+          },
+          {
+            name: 'tokenStandard';
+            docs: ['Token standard.'];
+            type: {
+              defined: 'TokenStandard';
+            };
+          },
+          {
+            name: 'amount';
+            docs: ['Amount of the asset.'];
+            type: 'u64';
           }
         ];
       };
@@ -1761,6 +1823,9 @@ export type MallowGumball = {
           },
           {
             name: 'Core';
+          },
+          {
+            name: 'Fungible';
           }
         ];
       };
@@ -3826,8 +3891,32 @@ export const IDL: MallowGumball = {
       },
     },
     {
-      name: 'ConfigLine',
+      name: 'ConfigLineV2Input',
       docs: ['Config line struct for storing asset (NFT) data pre-mint.'],
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'mint',
+            docs: ['Mint account of the asset.'],
+            type: 'publicKey',
+          },
+          {
+            name: 'seller',
+            docs: ['Wallet that submitted the asset for sale.'],
+            type: 'publicKey',
+          },
+          {
+            name: 'amount',
+            docs: ['Amount of the asset.'],
+            type: 'u64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'ConfigLine',
+      docs: ['Config line struct for storing asset data.'],
       type: {
         kind: 'struct',
         fields: [
@@ -3854,6 +3943,44 @@ export const IDL: MallowGumball = {
             type: {
               defined: 'TokenStandard',
             },
+          },
+        ],
+      },
+    },
+    {
+      name: 'ConfigLineV2',
+      docs: ['Config line struct for storing asset data.'],
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'mint',
+            docs: ['Mint account of the asset.'],
+            type: 'publicKey',
+          },
+          {
+            name: 'seller',
+            docs: ['Wallet that submitted the asset for sale.'],
+            type: 'publicKey',
+          },
+          {
+            name: 'buyer',
+            docs: [
+              'Wallet that will receive the asset upon sale. Empty until drawn.',
+            ],
+            type: 'publicKey',
+          },
+          {
+            name: 'tokenStandard',
+            docs: ['Token standard.'],
+            type: {
+              defined: 'TokenStandard',
+            },
+          },
+          {
+            name: 'amount',
+            docs: ['Amount of the asset.'],
+            type: 'u64',
           },
         ],
       },
@@ -3919,6 +4046,9 @@ export const IDL: MallowGumball = {
           },
           {
             name: 'Core',
+          },
+          {
+            name: 'Fungible',
           },
         ],
       },

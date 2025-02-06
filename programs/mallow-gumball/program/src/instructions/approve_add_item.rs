@@ -1,6 +1,6 @@
 use crate::{
     constants::{ADD_ITEM_REQUEST_SEED, AUTHORITY_SEED}, 
-    state::GumballMachine, AddItemRequest, ConfigLineInput, GumballError
+    state::GumballMachine, AddItemRequest, ConfigLineV2Input, GumballError
 };
 use anchor_lang::prelude::*;
 
@@ -63,9 +63,10 @@ pub fn approve_add_item(
 
     crate::processors::add_item(
         gumball_machine,
-        ConfigLineInput {
+        ConfigLineV2Input {
             mint: add_item_request.asset,
-            seller: add_item_request.seller
+            seller: add_item_request.seller,
+            amount: 1,
         },
         add_item_request.token_standard,
     )?;

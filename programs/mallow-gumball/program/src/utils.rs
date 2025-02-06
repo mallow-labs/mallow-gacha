@@ -28,8 +28,7 @@ use spl_token::instruction::{approve, transfer_checked};
 use utils::{assert_keys_equal, verify_proof};
 
 use crate::{
-    constants::{CONFIG_LINE_SIZE, GUMBALL_MACHINE_SIZE},
-    ConfigLine, GumballError, GumballMachine, SellerHistory,
+    constants::GUMBALL_MACHINE_SIZE, ConfigLine, GumballError, GumballMachine, SellerHistory,
 };
 
 /// Anchor wrapper for Token program.
@@ -114,7 +113,8 @@ pub fn assert_config_line(
         return err!(GumballError::IndexGreaterThanLength);
     }
 
-    let config_line_position = GUMBALL_MACHINE_SIZE + 4 + (index as usize) * CONFIG_LINE_SIZE;
+    let config_line_position =
+        GUMBALL_MACHINE_SIZE + 4 + (index as usize) * gumball_machine.get_config_line_size();
 
     let mint = Pubkey::try_from(&data[config_line_position..config_line_position + 32]).unwrap();
     require!(config_line.mint == mint, GumballError::InvalidMint);

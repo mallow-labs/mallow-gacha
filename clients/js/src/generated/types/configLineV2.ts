@@ -11,6 +11,7 @@ import {
   publicKey as publicKeySerializer,
   Serializer,
   struct,
+  u64,
 } from '@metaplex-foundation/umi/serializers';
 import {
   getTokenStandardSerializer,
@@ -19,7 +20,7 @@ import {
 } from '.';
 
 /** Config line struct for storing asset data. */
-export type ConfigLine = {
+export type ConfigLineV2 = {
   /** Mint account of the asset. */
   mint: PublicKey;
   /** Wallet that submitted the asset for sale. */
@@ -28,9 +29,11 @@ export type ConfigLine = {
   buyer: PublicKey;
   /** Token standard. */
   tokenStandard: TokenStandard;
+  /** Amount of the asset. */
+  amount: bigint;
 };
 
-export type ConfigLineArgs = {
+export type ConfigLineV2Args = {
   /** Mint account of the asset. */
   mint: PublicKey;
   /** Wallet that submitted the asset for sale. */
@@ -39,19 +42,22 @@ export type ConfigLineArgs = {
   buyer: PublicKey;
   /** Token standard. */
   tokenStandard: TokenStandardArgs;
+  /** Amount of the asset. */
+  amount: number | bigint;
 };
 
-export function getConfigLineSerializer(): Serializer<
-  ConfigLineArgs,
-  ConfigLine
+export function getConfigLineV2Serializer(): Serializer<
+  ConfigLineV2Args,
+  ConfigLineV2
 > {
-  return struct<ConfigLine>(
+  return struct<ConfigLineV2>(
     [
       ['mint', publicKeySerializer()],
       ['seller', publicKeySerializer()],
       ['buyer', publicKeySerializer()],
       ['tokenStandard', getTokenStandardSerializer()],
+      ['amount', u64()],
     ],
-    { description: 'ConfigLine' }
-  ) as Serializer<ConfigLineArgs, ConfigLine>;
+    { description: 'ConfigLineV2' }
+  ) as Serializer<ConfigLineV2Args, ConfigLineV2>;
 }
