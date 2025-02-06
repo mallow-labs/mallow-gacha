@@ -8,6 +8,7 @@
 
 export * from './addCoreAsset';
 export * from './addNft';
+export * from './addTokens';
 export * from './approveAddItem';
 export * from './baseSettleCoreAssetSale';
 export * from './baseSettleNftSale';

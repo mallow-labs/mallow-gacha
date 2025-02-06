@@ -1,16 +1,19 @@
 use crate::{
-    approve_and_freeze_nft, assert_can_add_item,
+    assert_can_add_item,
     constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
     state::GumballMachine,
     ConfigLineV2Input, GumballError, SellerHistory, Token, TokenStandard,
 };
 use anchor_lang::prelude::*;
-use mpl_token_metadata::accounts::Metadata;
-use utils::assert_is_non_printable_edition;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, TokenAccount},
+};
+use utils::transfer_spl;
 
 /// Add nft to a gumball machine.
 #[derive(Accounts)]
-pub struct AddNft<'info> {
+pub struct AddTokens<'info> {
     /// Gumball Machine account.
     #[account(
         mut,
@@ -43,41 +46,46 @@ pub struct AddNft<'info> {
     )]
     authority_pda: UncheckedAccount<'info>,
 
-    /// Seller of the nft
+    /// Seller of the tokens
     #[account(mut)]
     seller: Signer<'info>,
 
-    /// CHECK: Safe due to freeze
-    mint: UncheckedAccount<'info>,
+    mint: Box<Account<'info, Mint>>,
 
-    /// CHECK: Safe due to freeze
-    #[account(mut)]
-    token_account: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = token_account.mint == mint.key(),
+        constraint = token_account.owner == seller.key(),
+    )]
+    token_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: Safe due to processor mint check
-    metadata: UncheckedAccount<'info>,
-
-    /// CHECK: Safe due to freeze
-    edition: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        constraint = gumball_token_account.mint == mint.key(),
+        constraint = gumball_token_account.owner == authority_pda.key(),
+    )]
+    gumball_token_account: Box<Account<'info, TokenAccount>>,
 
     token_program: Program<'info, Token>,
-
-    /// CHECK: Safe due to constraint
-    #[account(address = mpl_token_metadata::ID)]
-    token_metadata_program: UncheckedAccount<'info>,
-
+    associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>,
+    rent: Sysvar<'info, Rent>,
 }
 
-pub fn add_nft(ctx: Context<AddNft>, seller_proof_path: Option<Vec<[u8; 32]>>) -> Result<()> {
+pub fn add_tokens(
+    ctx: Context<AddTokens>,
+    amount: u64,
+    seller_proof_path: Option<Vec<[u8; 32]>>,
+) -> Result<()> {
     let token_program = &ctx.accounts.token_program.to_account_info();
-    let token_account = &ctx.accounts.token_account.to_account_info();
-    let token_metadata_program = &ctx.accounts.token_metadata_program.to_account_info();
+    let ata_program = &ctx.accounts.associated_token_program.to_account_info();
+    let system_program = &ctx.accounts.system_program.to_account_info();
+    let rent = &ctx.accounts.rent.to_account_info();
     let authority_pda = &ctx.accounts.authority_pda.to_account_info();
     let seller = &ctx.accounts.seller.to_account_info();
-    let metadata_account = &ctx.accounts.metadata.to_account_info();
-    let edition = &ctx.accounts.edition.to_account_info();
     let mint = &ctx.accounts.mint.to_account_info();
+    let from_token_account = &ctx.accounts.token_account.to_account_info();
+    let to_token_account = &ctx.accounts.gumball_token_account.to_account_info();
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let seller_history = &mut ctx.accounts.seller_history;
 
@@ -89,41 +97,31 @@ pub fn add_nft(ctx: Context<AddNft>, seller_proof_path: Option<Vec<[u8; 32]>>) -
 
     seller_history.item_count += 1;
 
-    // Validate that the metadata is for the correct mint
-    let metadata = Metadata::try_from(metadata_account)?;
-    require!(
-        metadata.mint == ctx.accounts.mint.key(),
-        GumballError::MintMismatch
-    );
-
-    // Prevent selling printable master editions
-    assert_is_non_printable_edition(&ctx.accounts.edition.to_account_info())?;
-
     crate::processors::add_item(
         gumball_machine,
         ConfigLineV2Input {
             mint: ctx.accounts.mint.key(),
             seller: ctx.accounts.seller.key(),
-            amount: 1,
+            amount,
         },
-        TokenStandard::NonFungible,
+        TokenStandard::Fungible,
     )?;
 
-    let auth_seeds = [
-        AUTHORITY_SEED.as_bytes(),
-        ctx.accounts.gumball_machine.to_account_info().key.as_ref(),
-        &[ctx.bumps.authority_pda],
-    ];
-
-    approve_and_freeze_nft(
+    transfer_spl(
         seller,
-        mint,
-        token_account,
-        edition,
         authority_pda,
-        &auth_seeds,
-        token_metadata_program,
+        from_token_account,
+        to_token_account,
+        mint,
+        seller,
+        ata_program,
         token_program,
+        system_program,
+        rent,
+        None,
+        None,
+        None,
+        amount,
     )?;
 
     Ok(())

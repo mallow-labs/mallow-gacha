@@ -47,7 +47,7 @@ pub fn add_item(
     if gumball_machine.version >= 2 {
         position += 1;
 
-        let amount_slice: &mut [u8] = &mut data[position..position + 64];
+        let amount_slice: &mut [u8] = &mut data[position..position + 8];
         amount_slice.copy_from_slice(&u64::to_le_bytes(config_line.amount));
     }
 

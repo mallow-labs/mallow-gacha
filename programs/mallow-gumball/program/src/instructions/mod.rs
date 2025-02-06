@@ -1,5 +1,6 @@
 pub mod add_core_asset;
 pub mod add_nft;
+pub mod add_tokens;
 pub mod approve_add_item;
 pub mod cancel_add_core_asset_request;
 pub mod cancel_add_nft_request;
@@ -23,6 +24,7 @@ pub mod update_settings;
 
 pub use add_core_asset::*;
 pub use add_nft::*;
+pub use add_tokens::*;
 pub use approve_add_item::*;
 pub use cancel_add_core_asset_request::*;
 pub use cancel_add_nft_request::*;

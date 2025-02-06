@@ -110,7 +110,16 @@ export type MallowGumball = {
         '# Accounts',
         '',
         '0. `[writable]` Gumball Machine account',
-        '1. `[signer]` Gumball Machine authority'
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        '5. `[writable]` Token account',
+        '6. `[]` Metadata account',
+        '7. `[]` Edition account',
+        '8. `[]` Token program',
+        '9. `[]` Token Metadata program',
+        '10. `[]` System program'
       ];
       accounts: [
         {
@@ -193,7 +202,13 @@ export type MallowGumball = {
         '# Accounts',
         '',
         '0. `[writable]` Gumball Machine account',
-        '1. `[signer]` Gumball Machine authority'
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[writable]` Asset account',
+        '5. `[writable, optional]` Collection account',
+        '6. `[]` MPL Core program',
+        '7. `[]` System program'
       ];
       accounts: [
         {
@@ -243,6 +258,102 @@ export type MallowGumball = {
         }
       ];
       args: [
+        {
+          name: 'sellerProofPath';
+          type: {
+            option: {
+              vec: {
+                array: ['u8', 32];
+              };
+            };
+          };
+        }
+      ];
+    },
+    {
+      name: 'addTokens';
+      docs: [
+        'Add fungible tokens to the gumball machine.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[writable]` Gumball Machine account',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        "5. `[writable]` Seller's token account",
+        "6. `[writable]` Gumball machine's token account",
+        '7. `[]` Token program',
+        '8. `[]` Associated Token program',
+        '9. `[]` System program',
+        '10. `[]` Rent sysvar'
+      ];
+      accounts: [
+        {
+          name: 'gumballMachine';
+          isMut: true;
+          isSigner: false;
+          docs: ['Gumball Machine account.'];
+        },
+        {
+          name: 'sellerHistory';
+          isMut: true;
+          isSigner: false;
+          docs: ['Seller history account.'];
+        },
+        {
+          name: 'authorityPda';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'seller';
+          isMut: true;
+          isSigner: true;
+          docs: ['Seller of the tokens'];
+        },
+        {
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'tokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'gumballTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'rent';
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: 'amount';
+          type: 'u64';
+        },
         {
           name: 'sellerProofPath';
           type: {
@@ -2333,7 +2444,16 @@ export const IDL: MallowGumball = {
         '# Accounts',
         '',
         '0. `[writable]` Gumball Machine account',
-        '1. `[signer]` Gumball Machine authority',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        '5. `[writable]` Token account',
+        '6. `[]` Metadata account',
+        '7. `[]` Edition account',
+        '8. `[]` Token program',
+        '9. `[]` Token Metadata program',
+        '10. `[]` System program',
       ],
       accounts: [
         {
@@ -2416,7 +2536,13 @@ export const IDL: MallowGumball = {
         '# Accounts',
         '',
         '0. `[writable]` Gumball Machine account',
-        '1. `[signer]` Gumball Machine authority',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[writable]` Asset account',
+        '5. `[writable, optional]` Collection account',
+        '6. `[]` MPL Core program',
+        '7. `[]` System program',
       ],
       accounts: [
         {
@@ -2466,6 +2592,102 @@ export const IDL: MallowGumball = {
         },
       ],
       args: [
+        {
+          name: 'sellerProofPath',
+          type: {
+            option: {
+              vec: {
+                array: ['u8', 32],
+              },
+            },
+          },
+        },
+      ],
+    },
+    {
+      name: 'addTokens',
+      docs: [
+        'Add fungible tokens to the gumball machine.',
+        '',
+        '# Accounts',
+        '',
+        '0. `[writable]` Gumball Machine account',
+        '1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])',
+        '2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])',
+        '3. `[signer, writable]` Seller',
+        '4. `[]` Mint account',
+        "5. `[writable]` Seller's token account",
+        "6. `[writable]` Gumball machine's token account",
+        '7. `[]` Token program',
+        '8. `[]` Associated Token program',
+        '9. `[]` System program',
+        '10. `[]` Rent sysvar',
+      ],
+      accounts: [
+        {
+          name: 'gumballMachine',
+          isMut: true,
+          isSigner: false,
+          docs: ['Gumball Machine account.'],
+        },
+        {
+          name: 'sellerHistory',
+          isMut: true,
+          isSigner: false,
+          docs: ['Seller history account.'],
+        },
+        {
+          name: 'authorityPda',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'seller',
+          isMut: true,
+          isSigner: true,
+          docs: ['Seller of the tokens'],
+        },
+        {
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'tokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'gumballTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'rent',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'amount',
+          type: 'u64',
+        },
         {
           name: 'sellerProofPath',
           type: {

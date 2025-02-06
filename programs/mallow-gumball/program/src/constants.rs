@@ -42,4 +42,4 @@ pub const CONFIG_LINE_SIZE: usize = 32// mint
     + 32 // buyer
     +1; // token standard
 
-pub const CONFIG_LINE_V2_SIZE: usize = CONFIG_LINE_SIZE + 64; // amount
+pub const CONFIG_LINE_V2_SIZE: usize = CONFIG_LINE_SIZE + 8; // amount

@@ -1,5 +1,8 @@
 use crate::{
-    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED}, processors, state::GumballMachine, thaw_and_revoke_core_asset, GumballError, SellerHistory
+    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
+    processors,
+    state::GumballMachine,
+    thaw_and_revoke_core_asset, GumballError, SellerHistory,
 };
 use anchor_lang::prelude::*;
 

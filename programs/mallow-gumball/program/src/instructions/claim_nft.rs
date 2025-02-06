@@ -1,7 +1,9 @@
-use anchor_lang::prelude::*;
 use crate::{
-    assert_config_line, constants::AUTHORITY_SEED, events::ClaimItemEvent, processors, state::GumballMachine, AssociatedToken, GumballError, ConfigLine, GumballState, Token, TokenStandard
+    assert_config_line, constants::AUTHORITY_SEED, events::ClaimItemEvent, processors,
+    state::GumballMachine, AssociatedToken, ConfigLine, GumballError, GumballState, Token,
+    TokenStandard,
 };
+use anchor_lang::prelude::*;
 
 /// Settles a legacy NFT sale
 #[event_cpi]
@@ -72,7 +74,10 @@ pub struct ClaimNft<'info> {
     token_metadata_program: UncheckedAccount<'info>,
 }
 
-pub fn claim_nft<'info>(ctx: Context<'_, '_, '_, 'info, ClaimNft<'info>>, index: u32) -> Result<()> {
+pub fn claim_nft<'info>(
+    ctx: Context<'_, '_, '_, 'info, ClaimNft<'info>>,
+    index: u32,
+) -> Result<()> {
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let payer = &ctx.accounts.payer.to_account_info();
     let buyer = &ctx.accounts.buyer.to_account_info();

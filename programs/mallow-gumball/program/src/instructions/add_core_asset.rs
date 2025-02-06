@@ -1,7 +1,8 @@
 use crate::{
-    approve_and_freeze_core_asset, assert_can_add_item, assert_no_permanent_delegates, 
-    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED}, 
-    state::GumballMachine, ConfigLineV2Input, GumballError, SellerHistory, TokenStandard
+    approve_and_freeze_core_asset, assert_can_add_item, assert_no_permanent_delegates,
+    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
+    state::GumballMachine,
+    ConfigLineV2Input, GumballError, SellerHistory, TokenStandard,
 };
 use anchor_lang::prelude::*;
 

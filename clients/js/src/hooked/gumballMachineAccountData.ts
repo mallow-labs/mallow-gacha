@@ -7,6 +7,7 @@ import {
   Serializer,
   struct,
   u32,
+  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import { GUMBALL_MACHINE_HIDDEN_SECTION } from '../constants';
@@ -54,6 +55,8 @@ export type GumballMachineItem = {
   readonly buyer?: string;
 
   readonly tokenStandard: TokenStandard;
+
+  readonly amount: number;
 };
 
 type GumballMachineHiddenSection = {
@@ -63,6 +66,7 @@ type GumballMachineHiddenSection = {
     seller: PublicKey;
     buyer: PublicKey;
     tokenStandard: TokenStandard;
+    amount: number | bigint;
   }[];
   itemsClaimedMap: boolean[];
   itemsSettledMap: boolean[];
@@ -96,11 +100,13 @@ export function getGumballMachineAccountDataSerializer(): Serializer<
                 seller: PublicKey;
                 buyer: PublicKey;
                 tokenStandard: TokenStandard;
+                amount: number | bigint;
               }>([
                 ['mint', publicKey()],
                 ['seller', publicKey()],
                 ['buyer', publicKey()],
                 ['tokenStandard', u8()],
+                ['amount', u64()],
               ]),
               { size: itemCapacity }
             ),
@@ -137,6 +143,7 @@ export function getGumballMachineAccountDataSerializer(): Serializer<
           buyer:
             rawItem.buyer === defaultPublicKey() ? undefined : rawItem.buyer,
           tokenStandard: rawItem.tokenStandard,
+          amount: Number(rawItem.amount),
         };
         items.push(item);
       });

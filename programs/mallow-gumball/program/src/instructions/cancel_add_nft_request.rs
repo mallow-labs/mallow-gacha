@@ -1,6 +1,6 @@
 use crate::{
-    constants::{ADD_ITEM_REQUEST_SEED, AUTHORITY_SEED, SELLER_HISTORY_SEED}, 
-    thaw_and_revoke_nft, AddItemRequest, AssociatedToken, GumballError, SellerHistory, Token
+    constants::{ADD_ITEM_REQUEST_SEED, AUTHORITY_SEED, SELLER_HISTORY_SEED},
+    thaw_and_revoke_nft, AddItemRequest, AssociatedToken, GumballError, SellerHistory, Token,
 };
 use anchor_lang::prelude::*;
 
@@ -96,10 +96,10 @@ pub fn cancel_add_nft_request(ctx: Context<CancelAddNftRequest>) -> Result<()> {
     ];
 
     thaw_and_revoke_nft(
-        seller, 
-        mint, 
-        token_account, 
-        tmp_token_account, 
+        seller,
+        mint,
+        token_account,
+        tmp_token_account,
         edition,
         authority_pda,
         &auth_seeds,
@@ -107,7 +107,7 @@ pub fn cancel_add_nft_request(ctx: Context<CancelAddNftRequest>) -> Result<()> {
         token_program,
         associated_token_program,
         system_program,
-        rent
+        rent,
     )?;
 
     seller_history.item_count -= 1;

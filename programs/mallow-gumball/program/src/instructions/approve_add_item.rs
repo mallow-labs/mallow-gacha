@@ -1,6 +1,7 @@
 use crate::{
-    constants::{ADD_ITEM_REQUEST_SEED, AUTHORITY_SEED}, 
-    state::GumballMachine, AddItemRequest, ConfigLineV2Input, GumballError
+    constants::{ADD_ITEM_REQUEST_SEED, AUTHORITY_SEED},
+    state::GumballMachine,
+    AddItemRequest, ConfigLineV2Input, GumballError,
 };
 use anchor_lang::prelude::*;
 
@@ -54,9 +55,7 @@ pub struct ApproveAddItem<'info> {
     system_program: Program<'info, System>,
 }
 
-pub fn approve_add_item(
-    ctx: Context<ApproveAddItem>,
-) -> Result<()> {
+pub fn approve_add_item(ctx: Context<ApproveAddItem>) -> Result<()> {
     let gumball_machine = &mut ctx.accounts.gumball_machine;
 
     let add_item_request = &ctx.accounts.add_item_request;

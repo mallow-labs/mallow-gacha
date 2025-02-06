@@ -51,7 +51,16 @@ pub mod mallow_gumball {
     /// # Accounts
     ///
     ///   0. `[writable]` Gumball Machine account
-    ///   1. `[signer]` Gumball Machine authority
+    ///   1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])
+    ///   2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])
+    ///   3. `[signer, writable]` Seller
+    ///   4. `[]` Mint account
+    ///   5. `[writable]` Token account
+    ///   6. `[]` Metadata account
+    ///   7. `[]` Edition account
+    ///   8. `[]` Token program
+    ///   9. `[]` Token Metadata program
+    ///   10. `[]` System program
     pub fn add_nft(ctx: Context<AddNft>, seller_proof_path: Option<Vec<[u8; 32]>>) -> Result<()> {
         instructions::add_nft(ctx, seller_proof_path)
     }
@@ -61,12 +70,41 @@ pub mod mallow_gumball {
     /// # Accounts
     ///
     ///   0. `[writable]` Gumball Machine account
-    ///   1. `[signer]` Gumball Machine authority
+    ///   1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])
+    ///   2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])
+    ///   3. `[signer, writable]` Seller
+    ///   4. `[writable]` Asset account
+    ///   5. `[writable, optional]` Collection account
+    ///   6. `[]` MPL Core program
+    ///   7. `[]` System program
     pub fn add_core_asset(
         ctx: Context<AddCoreAsset>,
         seller_proof_path: Option<Vec<[u8; 32]>>,
     ) -> Result<()> {
         instructions::add_core_asset(ctx, seller_proof_path)
+    }
+
+    /// Add fungible tokens to the gumball machine.
+    ///
+    /// # Accounts
+    ///
+    ///   0. `[writable]` Gumball Machine account
+    ///   1. `[writable]` Seller history account (PDA, seeds: ["seller_history", gumball_machine, seller])
+    ///   2. `[writable]` Authority PDA (PDA, seeds: ["authority", gumball_machine])
+    ///   3. `[signer, writable]` Seller
+    ///   4. `[]` Mint account
+    ///   5. `[writable]` Seller's token account
+    ///   6. `[writable]` Gumball machine's token account
+    ///   7. `[]` Token program
+    ///   8. `[]` Associated Token program
+    ///   9. `[]` System program
+    ///   10. `[]` Rent sysvar
+    pub fn add_tokens(
+        ctx: Context<AddTokens>,
+        amount: u64,
+        seller_proof_path: Option<Vec<[u8; 32]>>,
+    ) -> Result<()> {
+        instructions::add_tokens(ctx, amount, seller_proof_path)
     }
 
     /// Request to add a NFT to the gumball machine.

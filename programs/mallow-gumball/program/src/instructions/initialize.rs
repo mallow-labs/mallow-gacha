@@ -1,6 +1,7 @@
 use crate::{
-    constants::{AUTHORITY_SEED, GUMBALL_MACHINE_SIZE}, state::GumballMachine, GumballError, FeeConfig, GumballSettings,
-    GumballState,
+    constants::{AUTHORITY_SEED, GUMBALL_MACHINE_SIZE},
+    state::GumballMachine,
+    FeeConfig, GumballError, GumballSettings, GumballState,
 };
 use anchor_lang::{prelude::*, Discriminator};
 use mpl_token_metadata::MAX_URI_LENGTH;
