@@ -54,12 +54,9 @@ pub struct ClaimTokens<'info> {
 
     mint: Box<Account<'info, Mint>>,
 
-    #[account(
-        mut,
-        constraint = buyer_token_account.mint == mint.key(),
-        constraint = buyer_token_account.owner == buyer.key(),
-    )]
-    buyer_token_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: Safe due to transfer checks
+    #[account(mut)]
+    buyer_token_account: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -107,8 +104,8 @@ pub fn claim_tokens<'info>(
     let amount = processors::claim_tokens(
         gumball_machine,
         index,
-        authority_pda,
         authority,
+        authority_pda,
         payer,
         buyer,
         buyer_token_account,

@@ -59,7 +59,7 @@ pub struct ClaimNft<'info> {
 
     /// CHECK: Safe due to transfer
     #[account(mut)]
-    tmp_token_account: UncheckedAccount<'info>,
+    authority_pda_token_account: UncheckedAccount<'info>,
 
     /// CHECK: Safe due to processor royalties check
     #[account(mut)]
@@ -82,7 +82,7 @@ pub fn claim_nft<'info>(
     let payer = &ctx.accounts.payer.to_account_info();
     let buyer = &ctx.accounts.buyer.to_account_info();
     let buyer_token_account = &ctx.accounts.buyer_token_account.to_account_info();
-    let tmp_token_account = &ctx.accounts.tmp_token_account.to_account_info();
+    let authority_pda_token_account = &ctx.accounts.authority_pda_token_account.to_account_info();
     let authority_pda = &mut ctx.accounts.authority_pda.to_account_info();
     let seller = &mut ctx.accounts.seller.to_account_info();
     let token_metadata_program = &ctx.accounts.token_metadata_program.to_account_info();
@@ -120,7 +120,7 @@ pub fn claim_nft<'info>(
         buyer_token_account,
         seller,
         token_account,
-        tmp_token_account,
+        authority_pda_token_account,
         mint,
         edition,
         token_program,

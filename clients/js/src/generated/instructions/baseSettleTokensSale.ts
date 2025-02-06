@@ -6,6 +6,7 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+import { findAssociatedTokenPda } from '@metaplex-foundation/mpl-toolbox';
 import {
   Context,
   Pda,
@@ -36,7 +37,7 @@ import {
 } from '../shared';
 
 // Accounts.
-export type SettleTokensSaleInstructionAccounts = {
+export type BaseSettleTokensSaleInstructionAccounts = {
   /** Anyone can settle the sale */
   payer?: Signer;
   /** Gumball machine account. */
@@ -55,7 +56,7 @@ export type SettleTokensSaleInstructionAccounts = {
   /** Seller history account. */
   sellerHistory?: PublicKey | Pda;
   /** buyer of the item */
-  buyer: PublicKey | Pda;
+  buyer?: PublicKey | Pda;
   /** Fee account for marketplace fee if using fee config */
   feeAccount?: PublicKey | Pda;
   /** Payment account for marketplace fee if using token payment */
@@ -68,53 +69,54 @@ export type SettleTokensSaleInstructionAccounts = {
   rent?: PublicKey | Pda;
   mint: PublicKey | Pda;
   receiverTokenAccount: PublicKey | Pda;
-  authorityPdaTokenAccount: PublicKey | Pda;
+  authorityPdaTokenAccount?: PublicKey | Pda;
   eventAuthority?: PublicKey | Pda;
   program?: PublicKey | Pda;
 };
 
 // Data.
-export type SettleTokensSaleInstructionData = {
+export type BaseSettleTokensSaleInstructionData = {
   discriminator: Array<number>;
   index: number;
 };
 
-export type SettleTokensSaleInstructionDataArgs = { index: number };
+export type BaseSettleTokensSaleInstructionDataArgs = { index: number };
 
-export function getSettleTokensSaleInstructionDataSerializer(): Serializer<
-  SettleTokensSaleInstructionDataArgs,
-  SettleTokensSaleInstructionData
+export function getBaseSettleTokensSaleInstructionDataSerializer(): Serializer<
+  BaseSettleTokensSaleInstructionDataArgs,
+  BaseSettleTokensSaleInstructionData
 > {
   return mapSerializer<
-    SettleTokensSaleInstructionDataArgs,
+    BaseSettleTokensSaleInstructionDataArgs,
     any,
-    SettleTokensSaleInstructionData
+    BaseSettleTokensSaleInstructionData
   >(
-    struct<SettleTokensSaleInstructionData>(
+    struct<BaseSettleTokensSaleInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['index', u32()],
       ],
-      { description: 'SettleTokensSaleInstructionData' }
+      { description: 'BaseSettleTokensSaleInstructionData' }
     ),
     (value) => ({
       ...value,
       discriminator: [49, 246, 210, 13, 79, 165, 190, 113],
     })
   ) as Serializer<
-    SettleTokensSaleInstructionDataArgs,
-    SettleTokensSaleInstructionData
+    BaseSettleTokensSaleInstructionDataArgs,
+    BaseSettleTokensSaleInstructionData
   >;
 }
 
 // Args.
-export type SettleTokensSaleInstructionArgs =
-  SettleTokensSaleInstructionDataArgs;
+export type BaseSettleTokensSaleInstructionArgs =
+  BaseSettleTokensSaleInstructionDataArgs;
 
 // Instruction.
-export function settleTokensSale(
+export function baseSettleTokensSale(
   context: Pick<Context, 'eddsa' | 'identity' | 'payer' | 'programs'>,
-  input: SettleTokensSaleInstructionAccounts & SettleTokensSaleInstructionArgs
+  input: BaseSettleTokensSaleInstructionAccounts &
+    BaseSettleTokensSaleInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -209,7 +211,7 @@ export function settleTokensSale(
   };
 
   // Arguments.
-  const resolvedArgs: SettleTokensSaleInstructionArgs = { ...input };
+  const resolvedArgs: BaseSettleTokensSaleInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.payer.value) {
@@ -221,14 +223,48 @@ export function settleTokensSale(
       { gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value) }
     );
   }
+  if (!resolvedAccounts.authorityPdaPaymentAccount.value) {
+    if (resolvedAccounts.paymentMint.value) {
+      resolvedAccounts.authorityPdaPaymentAccount.value =
+        findAssociatedTokenPda(context, {
+          mint: expectPublicKey(resolvedAccounts.paymentMint.value),
+          owner: expectPublicKey(resolvedAccounts.authorityPda.value),
+        });
+    }
+  }
   if (!resolvedAccounts.authority.value) {
     resolvedAccounts.authority.value = context.identity.publicKey;
+  }
+  if (!resolvedAccounts.authorityPaymentAccount.value) {
+    if (resolvedAccounts.paymentMint.value) {
+      resolvedAccounts.authorityPaymentAccount.value = findAssociatedTokenPda(
+        context,
+        {
+          mint: expectPublicKey(resolvedAccounts.paymentMint.value),
+          owner: expectPublicKey(resolvedAccounts.authority.value),
+        }
+      );
+    }
+  }
+  if (!resolvedAccounts.sellerPaymentAccount.value) {
+    if (resolvedAccounts.paymentMint.value) {
+      resolvedAccounts.sellerPaymentAccount.value = findAssociatedTokenPda(
+        context,
+        {
+          mint: expectPublicKey(resolvedAccounts.paymentMint.value),
+          owner: expectPublicKey(resolvedAccounts.seller.value),
+        }
+      );
+    }
   }
   if (!resolvedAccounts.sellerHistory.value) {
     resolvedAccounts.sellerHistory.value = findSellerHistoryPda(context, {
       gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value),
       seller: expectPublicKey(resolvedAccounts.seller.value),
     });
+  }
+  if (!resolvedAccounts.buyer.value) {
+    resolvedAccounts.buyer.value = context.identity.publicKey;
   }
   if (!resolvedAccounts.tokenProgram.value) {
     resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(
@@ -257,6 +293,15 @@ export function settleTokensSale(
       'SysvarRent111111111111111111111111111111111'
     );
   }
+  if (!resolvedAccounts.authorityPdaTokenAccount.value) {
+    resolvedAccounts.authorityPdaTokenAccount.value = findAssociatedTokenPda(
+      context,
+      {
+        mint: expectPublicKey(resolvedAccounts.mint.value),
+        owner: expectPublicKey(resolvedAccounts.authorityPda.value),
+      }
+    );
+  }
   if (!resolvedAccounts.eventAuthority.value) {
     resolvedAccounts.eventAuthority.value = findEventAuthorityPda(context);
   }
@@ -281,8 +326,8 @@ export function settleTokensSale(
   );
 
   // Data.
-  const data = getSettleTokensSaleInstructionDataSerializer().serialize(
-    resolvedArgs as SettleTokensSaleInstructionDataArgs
+  const data = getBaseSettleTokensSaleInstructionDataSerializer().serialize(
+    resolvedArgs as BaseSettleTokensSaleInstructionDataArgs
   );
 
   // Bytes Created On Chain.

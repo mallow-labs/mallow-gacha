@@ -533,7 +533,7 @@ export type MallowGumball = {
           isSigner: false;
         },
         {
-          name: 'tmpTokenAccount';
+          name: 'authorityPdaTokenAccount';
           isMut: true;
           isSigner: false;
         },
@@ -719,7 +719,7 @@ export type MallowGumball = {
           isSigner: false;
         },
         {
-          name: 'tmpTokenAccount';
+          name: 'authorityPdaTokenAccount';
           isMut: true;
           isSigner: false;
         },
@@ -1245,7 +1245,7 @@ export type MallowGumball = {
           docs: ['Nft token account for buyer'];
         },
         {
-          name: 'tmpTokenAccount';
+          name: 'authorityPdaTokenAccount';
           isMut: true;
           isSigner: false;
         },
@@ -1671,7 +1671,7 @@ export type MallowGumball = {
           docs: ['Nft token account for buyer'];
         },
         {
-          name: 'tmpTokenAccount';
+          name: 'authorityPdaTokenAccount';
           isMut: true;
           isSigner: false;
         },
@@ -3254,7 +3254,7 @@ export const IDL: MallowGumball = {
           isSigner: false,
         },
         {
-          name: 'tmpTokenAccount',
+          name: 'authorityPdaTokenAccount',
           isMut: true,
           isSigner: false,
         },
@@ -3440,7 +3440,7 @@ export const IDL: MallowGumball = {
           isSigner: false,
         },
         {
-          name: 'tmpTokenAccount',
+          name: 'authorityPdaTokenAccount',
           isMut: true,
           isSigner: false,
         },
@@ -3966,7 +3966,7 @@ export const IDL: MallowGumball = {
           docs: ['Nft token account for buyer'],
         },
         {
-          name: 'tmpTokenAccount',
+          name: 'authorityPdaTokenAccount',
           isMut: true,
           isSigner: false,
         },
@@ -4392,7 +4392,7 @@ export const IDL: MallowGumball = {
           docs: ['Nft token account for buyer'],
         },
         {
-          name: 'tmpTokenAccount',
+          name: 'authorityPdaTokenAccount',
           isMut: true,
           isSigner: false,
         },

@@ -41,6 +41,7 @@ import { Assertions } from 'ava';
 import {
   addCoreAsset,
   addNft,
+  addTokens,
   ConfigLineInput,
   createGumballGuard as baseCreateGumballGuard,
   CreateGumballGuardInstructionDataArgs,
@@ -232,7 +233,7 @@ export const create = async <DA extends GuardSetArgs = DefaultGuardSetArgs>(
     'settings'
   > & {
     settings?: Partial<GumballSettingsArgs>;
-    items?: { id: PublicKey; tokenStandard: TokenStandard }[];
+    items?: { id: PublicKey; tokenStandard: TokenStandard; amount?: number }[];
     startSale?: boolean;
   } & Partial<
       GumballGuardDataArgs<DA extends undefined ? DefaultGuardSetArgs : DA>
@@ -268,6 +269,14 @@ export const create = async <DA extends GuardSetArgs = DefaultGuardSetArgs>(
         addNft(umi, {
           gumballMachine: gumballMachine.publicKey,
           mint: item.id,
+        })
+      );
+    } else if (item.tokenStandard === TokenStandard.Fungible) {
+      builder = builder.add(
+        addTokens(umi, {
+          gumballMachine: gumballMachine.publicKey,
+          mint: item.id,
+          amount: item.amount ?? 1,
         })
       );
     } else {

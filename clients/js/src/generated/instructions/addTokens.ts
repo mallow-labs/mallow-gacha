@@ -9,6 +9,7 @@
 import { findAssociatedTokenPda } from '@metaplex-foundation/mpl-toolbox';
 import {
   Context,
+  none,
   Option,
   OptionOrNullable,
   Pda,
@@ -45,10 +46,10 @@ export type AddTokensInstructionAccounts = {
   sellerHistory?: PublicKey | Pda;
   authorityPda?: PublicKey | Pda;
   /** Seller of the tokens */
-  seller: Signer;
+  seller?: Signer;
   mint: PublicKey | Pda;
   tokenAccount?: PublicKey | Pda;
-  authorityPdaTokenAccount: PublicKey | Pda;
+  authorityPdaTokenAccount?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
@@ -64,7 +65,7 @@ export type AddTokensInstructionData = {
 
 export type AddTokensInstructionDataArgs = {
   amount: number | bigint;
-  sellerProofPath: OptionOrNullable<Array<Uint8Array>>;
+  sellerProofPath?: OptionOrNullable<Array<Uint8Array>>;
 };
 
 export function getAddTokensInstructionDataSerializer(): Serializer<
@@ -87,6 +88,7 @@ export function getAddTokensInstructionDataSerializer(): Serializer<
     (value) => ({
       ...value,
       discriminator: [28, 218, 30, 209, 175, 155, 153, 240],
+      sellerProofPath: value.sellerProofPath ?? none(),
     })
   ) as Serializer<AddTokensInstructionDataArgs, AddTokensInstructionData>;
 }
@@ -96,7 +98,7 @@ export type AddTokensInstructionArgs = AddTokensInstructionDataArgs;
 
 // Instruction.
 export function addTokens(
-  context: Pick<Context, 'eddsa' | 'programs'>,
+  context: Pick<Context, 'eddsa' | 'identity' | 'programs'>,
   input: AddTokensInstructionAccounts & AddTokensInstructionArgs
 ): TransactionBuilder {
   // Program ID.
@@ -156,6 +158,9 @@ export function addTokens(
   const resolvedArgs: AddTokensInstructionArgs = { ...input };
 
   // Default values.
+  if (!resolvedAccounts.seller.value) {
+    resolvedAccounts.seller.value = context.identity;
+  }
   if (!resolvedAccounts.sellerHistory.value) {
     resolvedAccounts.sellerHistory.value = findSellerHistoryPda(context, {
       gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value),
@@ -173,6 +178,15 @@ export function addTokens(
       mint: expectPublicKey(resolvedAccounts.mint.value),
       owner: expectPublicKey(resolvedAccounts.seller.value),
     });
+  }
+  if (!resolvedAccounts.authorityPdaTokenAccount.value) {
+    resolvedAccounts.authorityPdaTokenAccount.value = findAssociatedTokenPda(
+      context,
+      {
+        mint: expectPublicKey(resolvedAccounts.mint.value),
+        owner: expectPublicKey(resolvedAccounts.authorityPda.value),
+      }
+    );
   }
   if (!resolvedAccounts.tokenProgram.value) {
     resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(

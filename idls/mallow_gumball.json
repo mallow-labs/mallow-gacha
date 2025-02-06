@@ -596,7 +596,7 @@
           "isSigner": false
         },
         {
-          "name": "tmpTokenAccount",
+          "name": "authorityPdaTokenAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -804,7 +804,7 @@
           "isSigner": false
         },
         {
-          "name": "tmpTokenAccount",
+          "name": "authorityPdaTokenAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -1378,7 +1378,7 @@
           ]
         },
         {
-          "name": "tmpTokenAccount",
+          "name": "authorityPdaTokenAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -1864,7 +1864,7 @@
           ]
         },
         {
-          "name": "tmpTokenAccount",
+          "name": "authorityPdaTokenAccount",
           "isMut": true,
           "isSigner": false
         },

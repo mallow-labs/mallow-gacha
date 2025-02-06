@@ -6,6 +6,7 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+import { findAssociatedTokenPda } from '@metaplex-foundation/mpl-toolbox';
 import {
   Context,
   Pda,
@@ -46,14 +47,14 @@ export type ClaimTokensInstructionAccounts = {
   /** Seller of the nft */
   seller: PublicKey | Pda;
   /** buyer of the nft */
-  buyer: PublicKey | Pda;
+  buyer?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   rent?: PublicKey | Pda;
   mint: PublicKey | Pda;
-  buyerTokenAccount: PublicKey | Pda;
-  authorityPdaTokenAccount: PublicKey | Pda;
+  buyerTokenAccount?: PublicKey | Pda;
+  authorityPdaTokenAccount?: PublicKey | Pda;
   eventAuthority?: PublicKey | Pda;
   program?: PublicKey | Pda;
 };
@@ -170,6 +171,9 @@ export function claimTokens(
   if (!resolvedAccounts.authority.value) {
     resolvedAccounts.authority.value = context.identity.publicKey;
   }
+  if (!resolvedAccounts.buyer.value) {
+    resolvedAccounts.buyer.value = context.identity.publicKey;
+  }
   if (!resolvedAccounts.tokenProgram.value) {
     resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(
       'splToken',
@@ -195,6 +199,21 @@ export function claimTokens(
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
       'SysvarRent111111111111111111111111111111111'
+    );
+  }
+  if (!resolvedAccounts.buyerTokenAccount.value) {
+    resolvedAccounts.buyerTokenAccount.value = findAssociatedTokenPda(context, {
+      mint: expectPublicKey(resolvedAccounts.mint.value),
+      owner: expectPublicKey(resolvedAccounts.buyer.value),
+    });
+  }
+  if (!resolvedAccounts.authorityPdaTokenAccount.value) {
+    resolvedAccounts.authorityPdaTokenAccount.value = findAssociatedTokenPda(
+      context,
+      {
+        mint: expectPublicKey(resolvedAccounts.mint.value),
+        owner: expectPublicKey(resolvedAccounts.authorityPda.value),
+      }
     );
   }
   if (!resolvedAccounts.eventAuthority.value) {

@@ -43,10 +43,10 @@ export type RemoveTokensInstructionAccounts = {
   authorityPda?: PublicKey | Pda;
   /** Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft) */
   authority?: Signer;
-  seller: PublicKey | Pda;
+  seller?: PublicKey | Pda;
   mint: PublicKey | Pda;
   tokenAccount?: PublicKey | Pda;
-  authorityPdaTokenAccount: PublicKey | Pda;
+  authorityPdaTokenAccount?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
@@ -152,6 +152,9 @@ export function removeTokens(
   const resolvedArgs: RemoveTokensInstructionArgs = { ...input };
 
   // Default values.
+  if (!resolvedAccounts.seller.value) {
+    resolvedAccounts.seller.value = context.identity.publicKey;
+  }
   if (!resolvedAccounts.sellerHistory.value) {
     resolvedAccounts.sellerHistory.value = findSellerHistoryPda(context, {
       gumballMachine: expectPublicKey(resolvedAccounts.gumballMachine.value),
@@ -172,6 +175,15 @@ export function removeTokens(
       mint: expectPublicKey(resolvedAccounts.mint.value),
       owner: expectPublicKey(resolvedAccounts.seller.value),
     });
+  }
+  if (!resolvedAccounts.authorityPdaTokenAccount.value) {
+    resolvedAccounts.authorityPdaTokenAccount.value = findAssociatedTokenPda(
+      context,
+      {
+        mint: expectPublicKey(resolvedAccounts.mint.value),
+        owner: expectPublicKey(resolvedAccounts.authorityPda.value),
+      }
+    );
   }
   if (!resolvedAccounts.tokenProgram.value) {
     resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(

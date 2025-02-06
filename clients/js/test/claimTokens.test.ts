@@ -5,32 +5,51 @@ import {
   setComputeUnitLimit,
   TokenState,
 } from '@metaplex-foundation/mpl-toolbox';
-import { none, transactionBuilder } from '@metaplex-foundation/umi';
+import {
+  generateSigner,
+  none,
+  transactionBuilder,
+} from '@metaplex-foundation/umi';
 import test from 'ava';
 import {
-  claimNft,
+  claimTokens,
   draw,
   fetchGumballMachine,
+  findGumballMachineAuthorityPda,
   GumballMachine,
   TokenStandard,
 } from '../src';
 import {
   assertItemBought as assertItemDrawn,
   create,
-  createNft,
+  createMintWithHolders,
   createUmi,
 } from './_setup';
 
-test('it can claim an nft item', async (t) => {
+test('it can claim a tokens item', async (t) => {
   // Given a gumball machine with a gumball guard that has no guards.
   const umi = await createUmi();
-  const nft = await createNft(umi);
+  const gumballMachineSigner = generateSigner(umi);
 
-  const gumballMachineSigner = await create(umi, {
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [
+      { owner: umi.identity, amount: 100 },
+      {
+        owner: findGumballMachineAuthorityPda(umi, {
+          gumballMachine: gumballMachineSigner.publicKey,
+        }),
+        amount: 0,
+      },
+    ],
+  });
+
+  await create(umi, {
+    gumballMachine: gumballMachineSigner,
     items: [
       {
-        id: nft.publicKey,
-        tokenStandard: TokenStandard.NonFungible,
+        id: tokenMint.publicKey,
+        tokenStandard: TokenStandard.Fungible,
+        amount: 100,
       },
     ],
     startSale: true,
@@ -57,11 +76,12 @@ test('it can claim an nft item', async (t) => {
 
   await transactionBuilder()
     .add(
-      claimNft(buyerUmi, {
+      claimTokens(buyerUmi, {
         gumballMachine,
+        authority: umi.identity.publicKey,
         index: 0,
         seller: umi.identity.publicKey,
-        mint: nft.publicKey,
+        mint: tokenMint.publicKey,
       })
     )
     .sendAndConfirm(buyerUmi);
@@ -77,21 +97,20 @@ test('it can claim an nft item', async (t) => {
         isDrawn: true,
         isClaimed: true,
         isSettled: false,
-        mint: nft.publicKey,
+        mint: tokenMint.publicKey,
         seller: umi.identity.publicKey,
         buyer: buyerUmi.identity.publicKey,
-        tokenStandard: TokenStandard.NonFungible,
-        amount: 1,
+        tokenStandard: TokenStandard.Fungible,
+        amount: 100,
       },
     ],
   });
 
-  // Buyer should be the owner
-  // Then nft is unfrozen and revoked
+  // Buyer should be the owner of the tokens
   const tokenAccount = await fetchToken(
     umi,
     findAssociatedTokenPda(umi, {
-      mint: nft.publicKey,
+      mint: tokenMint.publicKey,
       owner: buyerUmi.identity.publicKey,
     })[0]
   );
@@ -100,20 +119,34 @@ test('it can claim an nft item', async (t) => {
     state: TokenState.Initialized,
     owner: buyerUmi.identity.publicKey,
     delegate: none(),
-    amount: 1n,
+    amount: 100n,
   });
 });
 
-test('it cannot claim an nft item as another buyer', async (t) => {
+test('it cannot claim a tokens item as another buyer', async (t) => {
   // Given a gumball machine with a gumball guard that has no guards.
   const umi = await createUmi();
-  const nft = await createNft(umi);
+  const gumballMachineSigner = generateSigner(umi);
 
-  const gumballMachineSigner = await create(umi, {
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [
+      { owner: umi.identity, amount: 100 },
+      {
+        owner: findGumballMachineAuthorityPda(umi, {
+          gumballMachine: gumballMachineSigner.publicKey,
+        }),
+        amount: 0,
+      },
+    ],
+  });
+
+  await create(umi, {
+    gumballMachine: gumballMachineSigner,
     items: [
       {
-        id: nft.publicKey,
-        tokenStandard: TokenStandard.NonFungible,
+        id: tokenMint.publicKey,
+        tokenStandard: TokenStandard.Fungible,
+        amount: 100,
       },
     ],
     startSale: true,
@@ -132,13 +165,15 @@ test('it cannot claim an nft item as another buyer', async (t) => {
     )
     .sendAndConfirm(buyerUmi);
 
+  // Then attempt to claim with a different user
   const promise = transactionBuilder()
     .add(
-      claimNft(umi, {
+      claimTokens(umi, {
         gumballMachine,
+        authority: umi.identity.publicKey,
         index: 0,
         seller: umi.identity.publicKey,
-        mint: nft.publicKey,
+        mint: tokenMint.publicKey,
       })
     )
     .sendAndConfirm(umi);
