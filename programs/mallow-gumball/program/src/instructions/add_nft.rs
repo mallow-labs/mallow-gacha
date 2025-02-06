@@ -85,7 +85,7 @@ pub fn add_nft(ctx: Context<AddNft>, seller_proof_path: Option<Vec<[u8; 32]>>) -
     seller_history.seller = seller.key();
 
     // Validate the seller
-    assert_can_add_item(gumball_machine, seller_history, seller_proof_path)?;
+    assert_can_add_item(gumball_machine, seller_history, 1, seller_proof_path)?;
 
     seller_history.item_count += 1;
 
@@ -107,6 +107,7 @@ pub fn add_nft(ctx: Context<AddNft>, seller_proof_path: Option<Vec<[u8; 32]>>) -
             amount: 1,
         },
         TokenStandard::NonFungible,
+        1,
     )?;
 
     let auth_seeds = [

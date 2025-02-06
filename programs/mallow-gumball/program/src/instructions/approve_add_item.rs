@@ -68,6 +68,7 @@ pub fn approve_add_item(ctx: Context<ApproveAddItem>) -> Result<()> {
             amount: 1,
         },
         add_item_request.token_standard,
+        1,
     )?;
 
     Ok(())

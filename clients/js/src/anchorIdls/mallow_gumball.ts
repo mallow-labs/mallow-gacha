@@ -355,6 +355,10 @@ export type MallowGumball = {
           type: 'u64';
         },
         {
+          name: 'quantity';
+          type: 'u16';
+        },
+        {
           name: 'sellerProofPath';
           type: {
             option: {
@@ -3074,6 +3078,10 @@ export const IDL: MallowGumball = {
         {
           name: 'amount',
           type: 'u64',
+        },
+        {
+          name: 'quantity',
+          type: 'u16',
         },
         {
           name: 'sellerProofPath',

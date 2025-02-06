@@ -102,9 +102,10 @@ pub mod mallow_gumball {
     pub fn add_tokens(
         ctx: Context<AddTokens>,
         amount: u64,
+        quantity: u16,
         seller_proof_path: Option<Vec<[u8; 32]>>,
     ) -> Result<()> {
-        instructions::add_tokens(ctx, amount, seller_proof_path)
+        instructions::add_tokens(ctx, amount, quantity, seller_proof_path)
     }
 
     /// Request to add a NFT to the gumball machine.

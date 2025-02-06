@@ -76,7 +76,7 @@ pub fn add_core_asset(
     seller_history.seller = seller.key();
 
     // Validate the seller
-    assert_can_add_item(gumball_machine, seller_history, seller_proof_path)?;
+    assert_can_add_item(gumball_machine, seller_history, 1, seller_proof_path)?;
 
     seller_history.item_count += 1;
 
@@ -97,6 +97,7 @@ pub fn add_core_asset(
             amount: 1,
         },
         TokenStandard::Core,
+        1,
     )?;
 
     let auth_seeds = [

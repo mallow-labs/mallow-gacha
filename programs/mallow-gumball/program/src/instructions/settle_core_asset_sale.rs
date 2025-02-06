@@ -190,7 +190,7 @@ pub fn settle_core_asset_sale<'info>(
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
         amount = 1;
-        
+
         processors::claim_core_asset(
             gumball_machine,
             index,

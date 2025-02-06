@@ -385,6 +385,10 @@
           "type": "u64"
         },
         {
+          "name": "quantity",
+          "type": "u16"
+        },
+        {
           "name": "sellerProofPath",
           "type": {
             "option": {

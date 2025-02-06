@@ -219,7 +219,7 @@ pub fn settle_nft_sale<'info>(
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
         amount = 1;
-        
+
         processors::claim_nft(
             gumball_machine,
             index,

@@ -186,14 +186,21 @@ pub fn settle_tokens_sale<'info>(
         &[ctx.bumps.authority_pda],
     ];
 
-
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
         // Ensure tokens are going back to the seller when there is no buyer
         if buyer.key() == Pubkey::default() {
-            assert_keys_equal(ctx.accounts.receiver_token_account.owner, *seller.key, "Invalid receiver_token_account")?;
+            assert_keys_equal(
+                ctx.accounts.receiver_token_account.owner,
+                *seller.key,
+                "Invalid receiver_token_account",
+            )?;
         } else {
-            assert_keys_equal(ctx.accounts.receiver_token_account.owner, *buyer.key, "Invalid receiver_token_account")?;
+            assert_keys_equal(
+                ctx.accounts.receiver_token_account.owner,
+                *buyer.key,
+                "Invalid receiver_token_account",
+            )?;
         }
 
         amount = processors::claim_tokens(

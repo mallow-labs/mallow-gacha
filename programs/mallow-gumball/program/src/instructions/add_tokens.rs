@@ -59,12 +59,9 @@ pub struct AddTokens<'info> {
     )]
     token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = authority_pda_token_account.mint == mint.key(),
-        constraint = authority_pda_token_account.owner == authority_pda.key(),
-    )]
-    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: Safe due to transfer checks
+    #[account(mut)]
+    authority_pda_token_account: UncheckedAccount<'info>,
 
     token_program: Program<'info, Token>,
     associated_token_program: Program<'info, AssociatedToken>,
@@ -75,6 +72,7 @@ pub struct AddTokens<'info> {
 pub fn add_tokens(
     ctx: Context<AddTokens>,
     amount: u64,
+    quantity: u16,
     seller_proof_path: Option<Vec<[u8; 32]>>,
 ) -> Result<()> {
     let token_program = &ctx.accounts.token_program.to_account_info();
@@ -93,9 +91,12 @@ pub fn add_tokens(
     seller_history.seller = seller.key();
 
     // Validate the seller
-    assert_can_add_item(gumball_machine, seller_history, seller_proof_path)?;
+    assert_can_add_item(gumball_machine, seller_history, quantity, seller_proof_path)?;
 
-    seller_history.item_count += 1;
+    seller_history.item_count = seller_history
+        .item_count
+        .checked_add(quantity.into())
+        .ok_or(GumballError::NumericalOverflowError)?;
 
     crate::processors::add_item(
         gumball_machine,
@@ -105,6 +106,7 @@ pub fn add_tokens(
             amount,
         },
         TokenStandard::Fungible,
+        quantity,
     )?;
 
     transfer_spl(
@@ -121,7 +123,9 @@ pub fn add_tokens(
         None,
         None,
         None,
-        amount,
+        amount
+            .checked_mul(quantity.into())
+            .ok_or(GumballError::NumericalOverflowError)?,
     )?;
 
     Ok(())

@@ -54,6 +54,7 @@ impl anchor_lang::Id for AssociatedToken {
 pub fn assert_can_add_item(
     gumball_machine: &mut Box<Account<GumballMachine>>,
     seller_history: &mut Box<Account<SellerHistory>>,
+    quantity: u16,
     seller_proof_path: Option<Vec<[u8; 32]>>,
 ) -> Result<()> {
     let seller = seller_history.seller;
@@ -62,7 +63,9 @@ pub fn assert_can_add_item(
         return Ok(());
     }
 
-    if seller_history.item_count >= gumball_machine.settings.items_per_seller as u64 {
+    if seller_history.item_count + quantity as u64
+        > gumball_machine.settings.items_per_seller as u64
+    {
         return err!(GumballError::SellerTooManyItems);
     }
 

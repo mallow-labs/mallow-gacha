@@ -26,6 +26,7 @@ import {
   option,
   Serializer,
   struct,
+  u16,
   u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
@@ -60,11 +61,13 @@ export type AddTokensInstructionAccounts = {
 export type AddTokensInstructionData = {
   discriminator: Array<number>;
   amount: bigint;
+  quantity: number;
   sellerProofPath: Option<Array<Uint8Array>>;
 };
 
 export type AddTokensInstructionDataArgs = {
   amount: number | bigint;
+  quantity: number;
   sellerProofPath?: OptionOrNullable<Array<Uint8Array>>;
 };
 
@@ -81,6 +84,7 @@ export function getAddTokensInstructionDataSerializer(): Serializer<
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['amount', u64()],
+        ['quantity', u16()],
         ['sellerProofPath', option(array(bytes({ size: 32 })))],
       ],
       { description: 'AddTokensInstructionData' }

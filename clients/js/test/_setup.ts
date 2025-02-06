@@ -233,7 +233,12 @@ export const create = async <DA extends GuardSetArgs = DefaultGuardSetArgs>(
     'settings'
   > & {
     settings?: Partial<GumballSettingsArgs>;
-    items?: { id: PublicKey; tokenStandard: TokenStandard; amount?: number }[];
+    items?: {
+      id: PublicKey;
+      tokenStandard: TokenStandard;
+      amount?: number;
+      quantity?: number;
+    }[];
     startSale?: boolean;
   } & Partial<
       GumballGuardDataArgs<DA extends undefined ? DefaultGuardSetArgs : DA>
@@ -277,6 +282,7 @@ export const create = async <DA extends GuardSetArgs = DefaultGuardSetArgs>(
           gumballMachine: gumballMachine.publicKey,
           mint: item.id,
           amount: item.amount ?? 1,
+          quantity: item.quantity ?? 1,
         })
       );
     } else {
