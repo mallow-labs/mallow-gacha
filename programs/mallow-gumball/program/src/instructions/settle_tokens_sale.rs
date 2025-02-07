@@ -1,5 +1,11 @@
 use crate::{
-    assert_config_line, constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED}, events::SettleItemSaleEvent, processors::{self, claim_proceeds, is_item_claimed}, state::GumballMachine, try_from, AssociatedToken, ConfigLine, GumballError, GumballState, SellerHistory, Token, TokenStandard
+    assert_config_line,
+    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
+    events::SettleItemSaleEvent,
+    processors::{self, claim_proceeds, is_item_claimed},
+    state::GumballMachine,
+    try_from, AssociatedToken, ConfigLine, GumballError, GumballState, SellerHistory, Token,
+    TokenStandard,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
@@ -177,7 +183,10 @@ pub fn settle_tokens_sale<'info>(
 
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
-        let authority_pda_token_account = &mut Box::new(try_from!(Account::<TokenAccount>, ctx.accounts.authority_pda_token_account)?);
+        let authority_pda_token_account = &mut Box::new(try_from!(
+            Account::<TokenAccount>,
+            ctx.accounts.authority_pda_token_account
+        )?);
         amount = processors::claim_tokens(
             gumball_machine,
             index,
