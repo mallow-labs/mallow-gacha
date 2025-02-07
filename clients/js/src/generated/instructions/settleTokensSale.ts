@@ -37,7 +37,7 @@ import {
 } from '../shared';
 
 // Accounts.
-export type BaseSettleTokensSaleInstructionAccounts = {
+export type SettleTokensSaleInstructionAccounts = {
   /** Anyone can settle the sale */
   payer?: Signer;
   /** Gumball machine account. */
@@ -75,48 +75,47 @@ export type BaseSettleTokensSaleInstructionAccounts = {
 };
 
 // Data.
-export type BaseSettleTokensSaleInstructionData = {
+export type SettleTokensSaleInstructionData = {
   discriminator: Array<number>;
   index: number;
 };
 
-export type BaseSettleTokensSaleInstructionDataArgs = { index: number };
+export type SettleTokensSaleInstructionDataArgs = { index: number };
 
-export function getBaseSettleTokensSaleInstructionDataSerializer(): Serializer<
-  BaseSettleTokensSaleInstructionDataArgs,
-  BaseSettleTokensSaleInstructionData
+export function getSettleTokensSaleInstructionDataSerializer(): Serializer<
+  SettleTokensSaleInstructionDataArgs,
+  SettleTokensSaleInstructionData
 > {
   return mapSerializer<
-    BaseSettleTokensSaleInstructionDataArgs,
+    SettleTokensSaleInstructionDataArgs,
     any,
-    BaseSettleTokensSaleInstructionData
+    SettleTokensSaleInstructionData
   >(
-    struct<BaseSettleTokensSaleInstructionData>(
+    struct<SettleTokensSaleInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['index', u32()],
       ],
-      { description: 'BaseSettleTokensSaleInstructionData' }
+      { description: 'SettleTokensSaleInstructionData' }
     ),
     (value) => ({
       ...value,
       discriminator: [49, 246, 210, 13, 79, 165, 190, 113],
     })
   ) as Serializer<
-    BaseSettleTokensSaleInstructionDataArgs,
-    BaseSettleTokensSaleInstructionData
+    SettleTokensSaleInstructionDataArgs,
+    SettleTokensSaleInstructionData
   >;
 }
 
 // Args.
-export type BaseSettleTokensSaleInstructionArgs =
-  BaseSettleTokensSaleInstructionDataArgs;
+export type SettleTokensSaleInstructionArgs =
+  SettleTokensSaleInstructionDataArgs;
 
 // Instruction.
-export function baseSettleTokensSale(
+export function settleTokensSale(
   context: Pick<Context, 'eddsa' | 'identity' | 'payer' | 'programs'>,
-  input: BaseSettleTokensSaleInstructionAccounts &
-    BaseSettleTokensSaleInstructionArgs
+  input: SettleTokensSaleInstructionAccounts & SettleTokensSaleInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -211,7 +210,7 @@ export function baseSettleTokensSale(
   };
 
   // Arguments.
-  const resolvedArgs: BaseSettleTokensSaleInstructionArgs = { ...input };
+  const resolvedArgs: SettleTokensSaleInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.payer.value) {
@@ -326,8 +325,8 @@ export function baseSettleTokensSale(
   );
 
   // Data.
-  const data = getBaseSettleTokensSaleInstructionDataSerializer().serialize(
-    resolvedArgs as BaseSettleTokensSaleInstructionDataArgs
+  const data = getSettleTokensSaleInstructionDataSerializer().serialize(
+    resolvedArgs as SettleTokensSaleInstructionDataArgs
   );
 
   // Bytes Created On Chain.

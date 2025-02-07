@@ -1,14 +1,9 @@
 use crate::{
-    assert_config_line,
-    constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED},
-    events::SettleItemSaleEvent,
-    processors::{self, claim_proceeds, is_item_claimed},
-    state::GumballMachine,
-    AssociatedToken, ConfigLine, GumballError, GumballState, SellerHistory, Token, TokenStandard,
+    assert_config_line, constants::{AUTHORITY_SEED, SELLER_HISTORY_SEED}, events::SettleItemSaleEvent, processors::{self, claim_proceeds, is_item_claimed}, state::GumballMachine, try_from, AssociatedToken, ConfigLine, GumballError, GumballState, SellerHistory, Token, TokenStandard
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
-use utils::{assert_keys_equal, RoyaltyInfo};
+use utils::RoyaltyInfo;
 
 /// Settles a legacy NFT sale
 #[event_cpi]
@@ -94,18 +89,13 @@ pub struct SettleTokensSale<'info> {
     /// CHECK: Safe due to item check
     mint: Box<Account<'info, Mint>>,
 
-    #[account(
-        mut,
-        constraint = receiver_token_account.mint == mint.key(),
-    )]
-    receiver_token_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: Safe due to transfer check
+    #[account(mut)]
+    receiver_token_account: UncheckedAccount<'info>,
 
-    #[account(
-        mut,
-        constraint = authority_pda_token_account.mint == mint.key(),
-        constraint = authority_pda_token_account.owner == authority_pda.key(),
-    )]
-    authority_pda_token_account: Box<Account<'info, TokenAccount>>,
+    /// CHECK: Safe due to transfer check
+    #[account(mut)]
+    authority_pda_token_account: UncheckedAccount<'info>,
 }
 
 pub fn settle_tokens_sale<'info>(
@@ -117,7 +107,6 @@ pub fn settle_tokens_sale<'info>(
     let payer = &ctx.accounts.payer.to_account_info();
     let buyer = &ctx.accounts.buyer.to_account_info();
     let receiver_token_account = &ctx.accounts.receiver_token_account.to_account_info();
-    let authority_pda_token_account = &mut ctx.accounts.authority_pda_token_account;
     let authority_pda = &mut ctx.accounts.authority_pda.to_account_info();
     let authority = &mut ctx.accounts.authority.to_account_info();
     let seller = &mut ctx.accounts.seller.to_account_info();
@@ -188,21 +177,7 @@ pub fn settle_tokens_sale<'info>(
 
     let mut amount = 0;
     if !is_item_claimed(gumball_machine, index)? {
-        // Ensure tokens are going back to the seller when there is no buyer
-        if buyer.key() == Pubkey::default() {
-            assert_keys_equal(
-                ctx.accounts.receiver_token_account.owner,
-                *seller.key,
-                "Invalid receiver_token_account",
-            )?;
-        } else {
-            assert_keys_equal(
-                ctx.accounts.receiver_token_account.owner,
-                *buyer.key,
-                "Invalid receiver_token_account",
-            )?;
-        }
-
+        let authority_pda_token_account = &mut Box::new(try_from!(Account::<TokenAccount>, ctx.accounts.authority_pda_token_account)?);
         amount = processors::claim_tokens(
             gumball_machine,
             index,

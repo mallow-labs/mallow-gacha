@@ -457,7 +457,7 @@ kinobi.update(
 			},
 		},
 		"mallowGumball.settleTokensSale": {
-			name: "baseSettleTokensSale",
+			name: "settleTokensSale",
 			accounts: {
 				buyer: { defaultsTo: k.identityDefault() },
 				buyerTokenAccount: { defaultsTo: defaultsToAssociatedTokenPda("mint", "buyer") },

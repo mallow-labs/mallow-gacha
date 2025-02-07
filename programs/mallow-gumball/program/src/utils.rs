@@ -526,6 +526,13 @@ pub fn thaw_and_revoke_nft<'a>(
     Ok(())
 }
 
+#[macro_export]
+macro_rules! try_from {
+    ($ty: ty, $acc: expr) => {
+        <$ty>::try_from(unsafe { std::mem::transmute::<_, &AccountInfo<'_>>($acc.as_ref()) })
+    };
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;
