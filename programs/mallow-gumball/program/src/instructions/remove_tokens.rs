@@ -6,6 +6,7 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
+use solana_program::program::invoke_signed;
 use utils::transfer_spl;
 
 /// Add nft to a gumball machine.
@@ -41,6 +42,7 @@ pub struct RemoveTokens<'info> {
     authority_pda: UncheckedAccount<'info>,
 
     /// Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft)
+    #[account(mut)]
     authority: Signer<'info>,
 
     /// CHECK: Safe due to item seller check
@@ -74,7 +76,7 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
     let rent = &ctx.accounts.rent.to_account_info();
     let token_program = &ctx.accounts.token_program.to_account_info();
     let associated_token_program = &ctx.accounts.associated_token_program.to_account_info();
-    let authority_pda_token_account = &ctx.accounts.authority_pda_token_account.to_account_info();
+    let authority_pda_token_account = &mut ctx.accounts.authority_pda_token_account;
     let seller_token_account = &ctx.accounts.token_account.to_account_info();
     let authority_pda = &ctx.accounts.authority_pda.to_account_info();
     let authority = &ctx.accounts.authority.to_account_info();
@@ -101,7 +103,7 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
     transfer_spl(
         authority_pda,
         seller,
-        authority_pda_token_account,
+        &authority_pda_token_account.to_account_info(),
         seller_token_account,
         mint,
         authority,
@@ -114,6 +116,28 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
         None,
         amount,
     )?;
+
+    authority_pda_token_account.reload()?;
+    // Close the token account back to authority if token account is empty
+    if authority_pda_token_account.amount == 0 {
+        invoke_signed(
+            &spl_token::instruction::close_account(
+                token_program.key,
+                authority_pda_token_account.to_account_info().key,
+                authority.key,
+                authority_pda.key,
+                &[],
+            )?,
+            &[
+                token_program.to_account_info(),
+                authority_pda_token_account.to_account_info(),
+                authority.to_account_info(),
+                authority_pda.to_account_info(),
+                system_program.to_account_info(),
+            ],
+            &[&auth_seeds],
+        )?;
+    }
 
     seller_history.item_count -= 1;
 

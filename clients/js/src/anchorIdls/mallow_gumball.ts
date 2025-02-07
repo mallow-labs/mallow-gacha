@@ -873,7 +873,7 @@ export type MallowGumball = {
         },
         {
           name: 'authority';
-          isMut: false;
+          isMut: true;
           isSigner: true;
           docs: [
             'Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft)'
@@ -3598,7 +3598,7 @@ export const IDL: MallowGumball = {
         },
         {
           name: 'authority',
-          isMut: false,
+          isMut: true,
           isSigner: true,
           docs: [
             'Authority allowed to remove the nft (must be the gumball machine auth or the seller of the nft)',

@@ -117,7 +117,7 @@ export function removeTokens(
       isWritable: true,
       value: input.authorityPda ?? null,
     },
-    authority: { index: 3, isWritable: false, value: input.authority ?? null },
+    authority: { index: 3, isWritable: true, value: input.authority ?? null },
     seller: { index: 4, isWritable: true, value: input.seller ?? null },
     mint: { index: 5, isWritable: false, value: input.mint ?? null },
     tokenAccount: {

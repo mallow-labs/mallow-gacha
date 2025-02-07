@@ -39,6 +39,7 @@ pub fn claim_tokens<'a, 'b>(
         amount,
     )?;
 
+    authority_pda_token_account.reload()?;
     // Close the token account back to authority if token account is empty
     if authority_pda_token_account.amount == 0 {
         invoke_signed(
