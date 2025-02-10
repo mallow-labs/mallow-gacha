@@ -18,6 +18,7 @@ import {
 } from '@metaplex-foundation/umi';
 import {
   array,
+  bytes,
   mapSerializer,
   Serializer,
   struct,
@@ -56,12 +57,12 @@ export type RemoveTokensInstructionAccounts = {
 // Data.
 export type RemoveTokensInstructionData = {
   discriminator: Array<number>;
-  index: number;
+  indices: Uint8Array;
   amount: bigint;
 };
 
 export type RemoveTokensInstructionDataArgs = {
-  index: number;
+  indices: Uint8Array;
   amount: number | bigint;
 };
 
@@ -77,7 +78,7 @@ export function getRemoveTokensInstructionDataSerializer(): Serializer<
     struct<RemoveTokensInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['index', u32()],
+        ['indices', bytes({ size: u32() })],
         ['amount', u64()],
       ],
       { description: 'RemoveTokensInstructionData' }

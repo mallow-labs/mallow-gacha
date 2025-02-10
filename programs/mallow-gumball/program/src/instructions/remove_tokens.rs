@@ -71,7 +71,7 @@ pub struct RemoveTokens<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
-pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Result<()> {
+pub fn remove_tokens(ctx: Context<RemoveTokens>, indices: Vec<u8>, amount: u64) -> Result<()> {
     let system_program = &ctx.accounts.system_program.to_account_info();
     let rent = &ctx.accounts.rent.to_account_info();
     let token_program = &ctx.accounts.token_program.to_account_info();
@@ -85,12 +85,12 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
     let gumball_machine = &mut ctx.accounts.gumball_machine;
     let seller_history = &mut ctx.accounts.seller_history;
 
-    processors::remove_item(
+    processors::remove_multiple_items(
         gumball_machine,
         authority.key(),
         mint.key(),
         seller.key(),
-        index,
+        &indices,
         amount,
     )?;
 
@@ -114,7 +114,9 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
         Some(authority_pda),
         Some(&auth_seeds),
         None,
-        amount,
+        amount
+            .checked_mul(indices.len() as u64)
+            .ok_or(GumballError::NumericalOverflowError)?,
     )?;
 
     authority_pda_token_account.reload()?;
@@ -139,7 +141,10 @@ pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Res
         )?;
     }
 
-    seller_history.item_count -= 1;
+    seller_history.item_count = seller_history
+        .item_count
+        .checked_sub(indices.len() as u64)
+        .ok_or(GumballError::NumericalOverflowError)?;
 
     if seller_history.item_count == 0 {
         seller_history.close(seller.to_account_info())?;

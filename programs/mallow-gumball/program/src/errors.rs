@@ -166,4 +166,10 @@ pub enum GumballError {
 
     #[msg("Invalid amount")]
     InvalidAmount,
+
+    #[msg("Duplicate index")]
+    DuplicateIndex,
+
+    #[msg("Invalid input length")]
+    InvalidInputLength,
 }

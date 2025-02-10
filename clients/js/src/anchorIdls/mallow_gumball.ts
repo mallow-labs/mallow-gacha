@@ -922,8 +922,8 @@ export type MallowGumball = {
       ];
       args: [
         {
-          name: 'index';
-          type: 'u32';
+          name: 'indices';
+          type: 'bytes';
         },
         {
           name: 'amount';
@@ -2719,6 +2719,16 @@ export type MallowGumball = {
       code: 6054;
       name: 'InvalidAmount';
       msg: 'Invalid amount';
+    },
+    {
+      code: 6055;
+      name: 'DuplicateIndex';
+      msg: 'Duplicate index';
+    },
+    {
+      code: 6056;
+      name: 'InvalidInputLength';
+      msg: 'Invalid input length';
     }
   ];
 };
@@ -3647,8 +3657,8 @@ export const IDL: MallowGumball = {
       ],
       args: [
         {
-          name: 'index',
-          type: 'u32',
+          name: 'indices',
+          type: 'bytes',
         },
         {
           name: 'amount',
@@ -5444,6 +5454,16 @@ export const IDL: MallowGumball = {
       code: 6054,
       name: 'InvalidAmount',
       msg: 'Invalid amount',
+    },
+    {
+      code: 6055,
+      name: 'DuplicateIndex',
+      msg: 'Duplicate index',
+    },
+    {
+      code: 6056,
+      name: 'InvalidInputLength',
+      msg: 'Invalid input length',
     },
   ],
 };

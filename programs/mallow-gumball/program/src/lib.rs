@@ -168,8 +168,8 @@ pub mod mallow_gumball {
     ///   8. `[]` Associated Token program
     ///   9. `[]` System program
     ///   10. `[]` Rent sysvar
-    pub fn remove_tokens(ctx: Context<RemoveTokens>, index: u32, amount: u64) -> Result<()> {
-        instructions::remove_tokens(ctx, index, amount)
+    pub fn remove_tokens(ctx: Context<RemoveTokens>, indices: Vec<u8>, amount: u64) -> Result<()> {
+        instructions::remove_tokens(ctx, indices, amount)
     }
 
     /// Allows minting to begin.

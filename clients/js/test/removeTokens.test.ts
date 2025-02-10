@@ -1,6 +1,7 @@
 import {
   fetchToken,
   findAssociatedTokenPda,
+  setComputeUnitLimit,
   TokenState,
 } from '@metaplex-foundation/mpl-toolbox';
 import {
@@ -51,7 +52,7 @@ test('it can remove tokens from a gumball machine', async (t) => {
     .add(
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint.publicKey,
         amount: 100,
       })
@@ -146,7 +147,7 @@ test('it can remove tokens at a lower index than last from a gumball machine', a
     .add(
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint1[0].publicKey,
         amount: 100,
       })
@@ -230,7 +231,7 @@ test('it can remove additional tokens from a gumball machine', async (t) => {
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
         mint: tokenMint1[0].publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         amount: 100,
       })
     )
@@ -257,7 +258,7 @@ test('it can remove additional tokens from a gumball machine', async (t) => {
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
         mint: tokenMint2[0].publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         amount: 100,
       })
     )
@@ -289,7 +290,7 @@ test('it cannot remove tokens when the machine is empty', async (t) => {
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
         mint: tokenMint.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         amount: 100,
       })
     )
@@ -327,7 +328,7 @@ test('it cannot remove tokens as a different seller', async (t) => {
       removeTokens(umi, {
         authority: generateSigner(umi),
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint.publicKey,
         amount: 100,
       })
@@ -371,7 +372,7 @@ test('it can remove another seller tokens as the gumball authority', async (t) =
     .add(
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint.publicKey,
         amount: 100,
         seller: otherSellerUmi.identity.publicKey,
@@ -443,7 +444,7 @@ test('it can remove own tokens as non gumball authority', async (t) => {
     .add(
       removeTokens(otherSellerUmi, {
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint.publicKey,
         amount: 100,
       })
@@ -503,7 +504,7 @@ test('it does not close the authority pda token account when there are tokens re
     .add(
       removeTokens(umi, {
         gumballMachine: gumballMachine.publicKey,
-        index: 0,
+        indices: new Uint8Array([0]),
         mint: tokenMint.publicKey,
         amount: 100,
       })
@@ -578,4 +579,341 @@ test('it does not close the authority pda token account when there are tokens re
     seller: umi.identity.publicKey,
     itemCount: 1n,
   });
+});
+
+test('it can remove multiple tokens at various indices from a gumball machine', async (t) => {
+  // Given a Gumball Machine with 5 tokens.
+  const umi = await createUmi();
+  const gumballMachine = await create(umi, { settings: { itemCapacity: 5 } });
+
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [{ owner: umi.identity, amount: 100 }],
+  });
+
+  // When we add a token prize to the Gumball Machine.
+  await transactionBuilder()
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 40,
+        quantity: 1,
+      })
+    )
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 20,
+        quantity: 1,
+      })
+    )
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 40,
+        quantity: 1,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then remove the tokens
+  await transactionBuilder()
+    .add(
+      removeTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        indices: new Uint8Array([0, 2]),
+        mint: tokenMint.publicKey,
+        amount: 40,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then the Gumball Machine has been updated properly.
+  const gumballMachineAccount = await fetchGumballMachine(
+    umi,
+    gumballMachine.publicKey
+  );
+
+  t.like(gumballMachineAccount, <Pick<GumballMachine, 'itemsLoaded' | 'items'>>{
+    itemsLoaded: 1,
+    items: [
+      {
+        index: 0,
+        isDrawn: false,
+        isClaimed: false,
+        isSettled: false,
+        mint: tokenMint.publicKey,
+        seller: umi.identity.publicKey,
+        buyer: undefined,
+        amount: 20,
+        tokenStandard: TokenStandard.Fungible,
+      },
+    ],
+  });
+
+  // Then seller's token account is filled
+  const tokenAccount = await fetchToken(
+    umi,
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: umi.identity.publicKey,
+    })[0]
+  );
+  t.like(tokenAccount, {
+    state: TokenState.Initialized,
+    owner: umi.identity.publicKey,
+    delegate: none(),
+    amount: 80n,
+  });
+
+  // Then authority pda's token account is closed
+  const authorityPda = findGumballMachineAuthorityPda(umi, {
+    gumballMachine: gumballMachine.publicKey,
+  })[0];
+  const authorityTokenAccount = await fetchToken(
+    umi,
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: authorityPda,
+    })[0]
+  );
+  t.like(authorityTokenAccount, {
+    state: TokenState.Initialized,
+    owner: authorityPda,
+    delegate: none(),
+    amount: 20n,
+  });
+
+  // Seller history should no longer exist
+  const sellerHistoryAccount = await safeFetchSellerHistory(
+    umi,
+    findSellerHistoryPda(umi, {
+      gumballMachine: gumballMachine.publicKey,
+      seller: umi.identity.publicKey,
+    })[0]
+  );
+
+  t.like(sellerHistoryAccount, <SellerHistory>{
+    gumballMachine: gumballMachine.publicKey,
+    seller: umi.identity.publicKey,
+    itemCount: 1n,
+  });
+});
+
+test('it can remove many tokens from a gumball machine', async (t) => {
+  // Given a Gumball Machine with 50 tokens.
+  const umi = await createUmi();
+  const gumballMachine = await create(umi, { settings: { itemCapacity: 100 } });
+
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [{ owner: umi.identity, amount: 100 }],
+  });
+
+  // When we add a token prize to the Gumball Machine.
+  await transactionBuilder()
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 1,
+        quantity: 100,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then remove the tokens
+  await transactionBuilder()
+    .add(setComputeUnitLimit(umi, { units: 500_000 }))
+    .add(
+      removeTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        indices: new Uint8Array(
+          Array(100)
+            .fill(0)
+            .map((_, i) => i)
+        ),
+        mint: tokenMint.publicKey,
+        amount: 1,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then the Gumball Machine has been updated properly.
+  const gumballMachineAccount = await fetchGumballMachine(
+    umi,
+    gumballMachine.publicKey
+  );
+
+  t.like(gumballMachineAccount, <Pick<GumballMachine, 'itemsLoaded' | 'items'>>{
+    itemsLoaded: 0,
+    items: [],
+  });
+
+  // Then seller's token account is filled
+  const tokenAccount = await fetchToken(
+    umi,
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: umi.identity.publicKey,
+    })[0]
+  );
+  t.like(tokenAccount, {
+    state: TokenState.Initialized,
+    owner: umi.identity.publicKey,
+    delegate: none(),
+    amount: 100n,
+  });
+
+  // Then authority pda's token account is closed
+  const authorityPda = findGumballMachineAuthorityPda(umi, {
+    gumballMachine: gumballMachine.publicKey,
+  })[0];
+  const authorityTokenAccountExists = await umi.rpc.accountExists(
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: authorityPda,
+    })[0]
+  );
+  t.falsy(authorityTokenAccountExists);
+
+  // Seller history should no longer exist
+  const sellerHistoryAccount = await safeFetchSellerHistory(
+    umi,
+    findSellerHistoryPda(umi, {
+      gumballMachine: gumballMachine.publicKey,
+      seller: umi.identity.publicKey,
+    })[0]
+  );
+
+  t.falsy(sellerHistoryAccount);
+});
+
+test('it cannot remove one of another token amount from a gumball machine', async (t) => {
+  // Given a Gumball Machine with 50 tokens.
+  const umi = await createUmi();
+  const gumballMachine = await create(umi, { settings: { itemCapacity: 100 } });
+
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [{ owner: umi.identity, amount: 100 }],
+  });
+
+  // When we add a token prize to the Gumball Machine.
+  await transactionBuilder()
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 10,
+        quantity: 1,
+      })
+    )
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 20,
+        quantity: 1,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then remove the tokens
+  const promise = transactionBuilder()
+    .add(
+      removeTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        indices: new Uint8Array([0, 1]),
+        mint: tokenMint.publicKey,
+        amount: 10,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then an error is thrown.
+  await t.throwsAsync(promise, { message: /InvalidAmount/ });
+});
+
+test('it can remove tokens using unordered indices from a gumball machine', async (t) => {
+  // Given a Gumball Machine with 50 tokens.
+  const umi = await createUmi();
+  const gumballMachine = await create(umi, { settings: { itemCapacity: 3 } });
+
+  const [tokenMint] = await createMintWithHolders(umi, {
+    holders: [{ owner: umi.identity, amount: 100 }],
+  });
+
+  // When we add a token prize to the Gumball Machine.
+  await transactionBuilder()
+    .add(
+      addTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        mint: tokenMint.publicKey,
+        amount: 30,
+        quantity: 3,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then remove the tokens
+  await transactionBuilder()
+    .add(
+      removeTokens(umi, {
+        gumballMachine: gumballMachine.publicKey,
+        indices: new Uint8Array([2, 0, 1]),
+        mint: tokenMint.publicKey,
+        amount: 30,
+      })
+    )
+    .sendAndConfirm(umi);
+
+  // Then the Gumball Machine has been updated properly.
+  const gumballMachineAccount = await fetchGumballMachine(
+    umi,
+    gumballMachine.publicKey
+  );
+
+  t.like(gumballMachineAccount, <Pick<GumballMachine, 'itemsLoaded' | 'items'>>{
+    itemsLoaded: 0,
+    items: [],
+  });
+
+  // Then seller's token account is filled
+  const tokenAccount = await fetchToken(
+    umi,
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: umi.identity.publicKey,
+    })[0]
+  );
+  t.like(tokenAccount, {
+    state: TokenState.Initialized,
+    owner: umi.identity.publicKey,
+    delegate: none(),
+    amount: 100n,
+  });
+
+  // Then authority pda's token account is closed
+  const authorityPda = findGumballMachineAuthorityPda(umi, {
+    gumballMachine: gumballMachine.publicKey,
+  })[0];
+  const authorityTokenAccountExists = await umi.rpc.accountExists(
+    findAssociatedTokenPda(umi, {
+      mint: tokenMint.publicKey,
+      owner: authorityPda,
+    })[0]
+  );
+  t.falsy(authorityTokenAccountExists);
+
+  // Seller history should no longer exist
+  const sellerHistoryAccount = await safeFetchSellerHistory(
+    umi,
+    findSellerHistoryPda(umi, {
+      gumballMachine: gumballMachine.publicKey,
+      seller: umi.identity.publicKey,
+    })[0]
+  );
+
+  t.falsy(sellerHistoryAccount);
 });
